@@ -2,12 +2,13 @@
  * Ghostty terminal backend using AppleScript.
  *
  * Requires Ghostty 1.3.0+ on macOS with AppleScript enabled.
+ *
+ * Panes are tracked by terminal index within the selected tab of the
+ * front window (e.g. "terminal 1", "terminal 2"). Each `createSplit`
+ * increments the index.
  */
 
 import type { PaneHandle, Terminal } from "./terminal.ts"
-
-/** Counter for generating unique pane IDs within a session. */
-let nextPaneId = 1
 
 /**
  * Runs an AppleScript snippet against the Ghostty application.
@@ -33,49 +34,41 @@ async function runAppleScript(script: string): Promise<string> {
 }
 
 /**
- * Builds an AppleScript reference to a pane by its ID.
+ * Builds the AppleScript reference for a terminal pane by index.
  *
- * The "initial" pane refers to terminal 1 of the front window.
- * Split panes are referenced by their osascript variable name.
+ * @param pane - The pane handle containing the terminal index
+ * @returns AppleScript object reference string
  */
-function paneRef(pane: PaneHandle): string {
-  if (pane.id === "initial") {
-    return "terminal 1 of selected tab of front window"
-  }
-  return pane.id
+function terminalRef(pane: PaneHandle): string {
+  return `terminal ${pane.id} of selected tab of front window`
 }
 
 export function createGhosttyTerminal(): Terminal {
+  let terminalCount = 1
+
   return {
     name: "ghostty",
 
     currentPane(): PaneHandle {
-      return { id: "initial" }
+      return { id: "1" }
     },
 
     async createSplit(): Promise<PaneHandle> {
-      const varName = `pane${nextPaneId++}`
+      const currentRef = terminalRef({ id: String(terminalCount) })
 
-      // Split the front window's first terminal to the right.
-      // We use 'do script' style -- osascript returns a reference to the new terminal.
       const script = `tell application "Ghostty"
-  set ${varName} to split (${paneRef({ id: "initial" })}) direction right
-  return id of ${varName}
+  split (${currentRef}) direction right
 end tell`
 
-      const terminalId = await runAppleScript(script)
+      await runAppleScript(script)
 
-      return { id: terminalId }
+      terminalCount++
+      return { id: String(terminalCount) }
     },
 
     async sendText(pane: PaneHandle, text: string): Promise<void> {
-      // Escape backslashes and double quotes for AppleScript string
       const escaped = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-
-      const ref =
-        pane.id === "initial"
-          ? paneRef(pane)
-          : `(first terminal of selected tab of front window whose id is ${pane.id})`
+      const ref = terminalRef(pane)
 
       const script = `tell application "Ghostty"
   input text "${escaped}" to ${ref}
@@ -85,15 +78,10 @@ end tell`
     },
 
     async sendKey(pane: PaneHandle, key: string): Promise<void> {
-      const ghosttyKey = key.toLowerCase()
-
-      const ref =
-        pane.id === "initial"
-          ? paneRef(pane)
-          : `(first terminal of selected tab of front window whose id is ${pane.id})`
+      const ref = terminalRef(pane)
 
       const script = `tell application "Ghostty"
-  send key "${ghosttyKey}" to ${ref}
+  send key "${key.toLowerCase()}" to ${ref}
 end tell`
 
       await runAppleScript(script)
