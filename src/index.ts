@@ -15,14 +15,14 @@
 import { loadConfig } from "./config.ts"
 import { init } from "./init.ts"
 import { launchAllAgents } from "./launch.ts"
+import { list, printUsage } from "./list.ts"
 import { detectTerminal } from "./terminal/index.ts"
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2)
 
   if (args.length === 0) {
-    console.error("Usage: panel <command> [arg]")
-    console.error("       panel init")
+    await printUsage()
     process.exit(1)
   }
 
@@ -30,6 +30,11 @@ async function main(): Promise<void> {
 
   if (commandName === "init") {
     await init()
+    return
+  }
+
+  if (commandName === "list") {
+    await list()
     return
   }
 
