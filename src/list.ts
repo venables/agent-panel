@@ -27,7 +27,7 @@ function formatCommand(
  * @param config - The loaded config
  */
 function printCommands(config: Config): void {
-  console.log("Commands:")
+  console.log(`Commands (from ${configPath()}):`)
   for (const [name, command] of Object.entries(config.commands)) {
     console.log(`  panel ${formatCommand(name, command)}`)
   }
