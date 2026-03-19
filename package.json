@@ -1,5 +1,5 @@
 {
-  "name": "@anthropic-ai/panel",
+  "name": "agent-panel",
   "version": "0.1.0",
   "description": "Launch multiple AI coding agents in parallel terminal splits",
   "keywords": [
@@ -17,9 +17,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropics/panel"
+    "url": "https://github.com/venables/agent-panel"
   },
   "bin": {
+    "agent-panel": "./dist/index.mjs",
     "panel": "./dist/index.mjs"
   },
   "files": [
