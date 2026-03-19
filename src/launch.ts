@@ -1,9 +1,9 @@
 /**
- * Orchestrates launching review agents in terminal splits.
+ * Orchestrates launching agents in terminal splits.
  */
 
-import type { AgentConfig, ReviewConfig, ReviewTarget } from "./config.ts"
-import { resolvePrompt } from "./config.ts"
+import type { AgentConfig, Config } from "./config.ts"
+import { resolveAgentCommand, resolveCommandPrompt } from "./config.ts"
 import type { PaneHandle, Terminal } from "./terminal/terminal.ts"
 
 /** Result of launching a single agent. */
@@ -13,75 +13,67 @@ export interface LaunchResult {
 }
 
 /**
- * Builds the full shell command to launch an agent with its prompt.
- *
- * @param config - The review config
- * @param agent - The agent to launch
- * @param target - The review target
- * @returns The shell command string (e.g. `claude "Review PR 123..."`)
- */
-function buildCommand(
-  config: ReviewConfig,
-  agent: AgentConfig,
-  target: ReviewTarget
-): string {
-  const prompt = resolvePrompt(config, agent, target)
-  return agent.command.replace("{{prompt}}", prompt)
-}
-
-/**
- * Launches an agent in a terminal pane.
+ * Launches an agent in a terminal pane with a resolved command.
  *
  * @param terminal - The terminal backend
- * @param config - The review config
  * @param agent - The agent to launch
- * @param target - The review target
+ * @param shellCommand - The fully resolved shell command
  * @param pane - The pane to launch in
  * @returns The launch result
  */
 async function launchInPane(
   terminal: Terminal,
-  config: ReviewConfig,
   agent: AgentConfig,
-  target: ReviewTarget,
+  shellCommand: string,
   pane: PaneHandle
 ): Promise<LaunchResult> {
-  const command = buildCommand(config, agent, target)
-  await terminal.sendText(pane, command)
+  await terminal.sendText(pane, shellCommand)
   await terminal.sendKey(pane, "Enter")
   return { agent, pane }
 }
 
 /**
- * Launches all configured agents.
+ * Launches all agents for a given command.
  *
  * The first agent reuses the current pane. Subsequent agents get new splits.
  *
  * @param terminal - The terminal backend to use
- * @param config - The review config containing agent definitions
- * @param target - The review target (PR or branch diff)
+ * @param config - The full config
+ * @param commandName - The command to run (e.g. "review")
+ * @param arg - Optional argument for the command
  * @returns Array of launch results for each agent
  */
 export async function launchAllAgents(
   terminal: Terminal,
-  config: ReviewConfig,
-  target: ReviewTarget
+  config: Config,
+  commandName: string,
+  arg: string | undefined
 ): Promise<readonly LaunchResult[]> {
+  const command = config.commands[commandName]
+
+  if (!command) {
+    const available = Object.keys(config.commands).join(", ")
+    throw new Error(
+      `Unknown command: "${commandName}". Available commands: ${available}`
+    )
+  }
+
+  const prompt = resolveCommandPrompt(command, arg)
   const results: LaunchResult[] = []
 
   for (let i = 0; i < config.agents.length; i++) {
     const agent = config.agents[i]!
+    const shellCommand = resolveAgentCommand(agent, prompt)
 
     let pane: PaneHandle
     if (i === 0) {
       pane = terminal.currentPane()
     } else {
       pane = await terminal.createSplit()
-      // Small delay to let the shell initialize in the new split
       await Bun.sleep(500)
     }
 
-    const result = await launchInPane(terminal, config, agent, target, pane)
+    const result = await launchInPane(terminal, agent, shellCommand, pane)
     results.push(result)
   }
 

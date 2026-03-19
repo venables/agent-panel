@@ -1,80 +1,145 @@
 /**
- * Agent and CLI configuration for review-cli.
+ * Configuration schema and loading for council.
+ *
+ * Config file: ~/.config/council/config.jsonc
  */
 
-/** Configuration for a single review agent. */
-export interface AgentConfig {
-  /** Display name for the agent. */
-  readonly name: string
+import { homedir } from "node:os"
+import { join } from "node:path"
 
-  /**
-   * Shell command template. Use {{prompt}} as placeholder for the review prompt.
-   *
-   * @example 'claude "{{prompt}}"'
-   * @example 'opencode --prompt "{{prompt}}"'
-   */
-  readonly command: string
+import { z } from "zod"
 
-  /** Optional per-agent prompt override for PR mode. Falls back to default. */
-  readonly promptPr?: string
+const APP_NAME = "council"
 
-  /** Optional per-agent prompt override for branch diff mode. Falls back to default. */
-  readonly promptDiff?: string
-}
+/** Schema for a single agent. */
+const AgentSchema = z.object({
+  name: z.string(),
+  command: z
+    .string()
+    .describe("Shell command template with {{prompt}} placeholder")
+})
 
-/** Review target: either a specific PR or the current branch vs main. */
-export type ReviewTarget =
-  | { readonly mode: "pr"; readonly prNumber: string }
-  | { readonly mode: "diff" }
+/** Schema for a single command definition. */
+const CommandSchema = z.object({
+  prompt: z
+    .string()
+    .describe("Prompt template with optional {{arg}} placeholder"),
+  promptNoArg: z
+    .string()
+    .optional()
+    .describe("Fallback prompt when no arg is given"),
+  requiresArg: z.boolean().optional().default(false)
+})
 
-/** Top-level configuration. */
-export interface ReviewConfig {
-  /** Default prompt template for PR mode. Use {{pr}} as placeholder. */
-  readonly defaultPromptPr: string
+/** Schema for the full config file. */
+const ConfigSchema = z.object({
+  agents: z.array(AgentSchema).min(1),
+  commands: z.record(z.string(), CommandSchema)
+})
 
-  /** Default prompt template for branch diff mode. */
-  readonly defaultPromptDiff: string
+export type AgentConfig = z.infer<typeof AgentSchema>
+export type CommandConfig = z.infer<typeof CommandSchema>
+export type Config = z.infer<typeof ConfigSchema>
 
-  /** Ordered list of agents to launch in splits. */
-  readonly agents: readonly AgentConfig[]
-}
-
-const DEFAULT_PROMPT_PR =
-  "Review PR {{pr}}. Leave comments in this session and not on the PR itself."
-
-const DEFAULT_PROMPT_DIFF =
-  "Review all changes between this branch and main, including any dirty or unstaged files. Leave comments in this session and not on the PR itself."
-
-export const DEFAULT_CONFIG: ReviewConfig = {
-  defaultPromptPr: DEFAULT_PROMPT_PR,
-  defaultPromptDiff: DEFAULT_PROMPT_DIFF,
-  agents: [
-    { name: "claude", command: 'claude "{{prompt}}"' },
-    { name: "codex", command: 'codex "{{prompt}}"' },
-    { name: "opencode", command: 'opencode --prompt "{{prompt}}"' }
-  ]
+/** Returns the path to the config file. */
+export function configPath(): string {
+  return join(homedir(), ".config", APP_NAME, "config.jsonc")
 }
 
 /**
- * Resolves the prompt for a given agent and review target.
+ * Strips single-line // comments and trailing commas from JSONC.
  *
- * Uses per-agent prompt if configured, otherwise falls back to the default.
- * Substitutes {{pr}} in PR mode.
- *
- * @param config - The top-level review config
- * @param agent - The agent whose prompt to resolve
- * @param target - The review target (PR number or branch diff)
- * @returns The fully resolved prompt string
+ * @param input - JSONC string
+ * @returns Valid JSON string
  */
-export function resolvePrompt(
-  config: ReviewConfig,
-  agent: AgentConfig,
-  target: ReviewTarget
-): string {
-  if (target.mode === "pr") {
-    const template = agent.promptPr ?? config.defaultPromptPr
-    return template.replace("{{pr}}", target.prNumber)
+function stripJsonc(input: string): string {
+  return input.replace(/\/\/.*$/gm, "").replace(/,(\s*[}\]])/g, "$1")
+}
+
+/**
+ * Loads and validates the config file.
+ *
+ * @returns The validated config
+ * @throws If the file is missing, invalid JSON, or fails schema validation
+ */
+export async function loadConfig(): Promise<Config> {
+  const path = configPath()
+  const file = Bun.file(path)
+  const exists = await file.exists()
+
+  if (!exists) {
+    throw new Error(
+      `Config file not found: ${path}\nRun 'council init' to create a default config.`
+    )
   }
 
-  return agent.promptDiff ?? config.defaultPromptDiff
+  const raw = await file.text()
+  const json: unknown = JSON.parse(stripJsonc(raw))
+  return ConfigSchema.parse(json)
 }
+
+/**
+ * Resolves the prompt for a command + optional arg.
+ *
+ * @param command - The command config
+ * @param arg - Optional argument to substitute for {{arg}}
+ * @returns The resolved prompt string
+ * @throws If arg is required but not provided
+ */
+export function resolveCommandPrompt(
+  command: CommandConfig,
+  arg: string | undefined
+): string {
+  if (!arg) {
+    if (command.requiresArg) {
+      throw new Error("This command requires an argument.")
+    }
+    if (command.promptNoArg) {
+      return command.promptNoArg
+    }
+    return command.prompt.replace(" {{arg}}", "").replace("{{arg}}", "")
+  }
+
+  return command.prompt.replace("{{arg}}", arg)
+}
+
+/**
+ * Resolves the full shell command for an agent given a prompt.
+ *
+ * @param agent - The agent config
+ * @param prompt - The resolved prompt string
+ * @returns The shell command to execute
+ */
+export function resolveAgentCommand(
+  agent: AgentConfig,
+  prompt: string
+): string {
+  return agent.command.replace("{{prompt}}", prompt)
+}
+
+/** Default config written by `council init`. */
+export const DEFAULT_CONFIG_CONTENT = `{
+  // Agent definitions -- each needs a {{prompt}} placeholder in command
+  "agents": [
+    { "name": "claude", "command": "claude \\"{{prompt}}\\"" },
+    { "name": "codex", "command": "codex \\"{{prompt}}\\"" },
+    { "name": "opencode", "command": "opencode --prompt \\"{{prompt}}\\"" }
+  ],
+
+  // Commands -- use {{arg}} for the optional argument
+  "commands": {
+    "review": {
+      "prompt": "Review PR {{arg}}. Leave comments in this session and not on the PR itself.",
+      "promptNoArg": "Review all changes between this branch and main, including any dirty or unstaged files. Leave comments in this session and not on the PR itself."
+    },
+    "fix": {
+      "prompt": "Fix issue {{arg}}. Implement the fix and show me what you changed.",
+      "requiresArg": true
+    },
+    "explain": {
+      "prompt": "Explain {{arg}} in this codebase. Be thorough.",
+      "requiresArg": true
+    }
+  }
+}
+`

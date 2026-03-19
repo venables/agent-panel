@@ -1,50 +1,53 @@
 /**
- * CLI entry point for review-cli.
+ * CLI entry point for council.
  *
  * Usage:
- *   bun run cli [pr-number]
+ *   council init                  Create default config
+ *   council <command> [arg]       Run a command from config
  *
- * With a PR number: agents review that PR.
- * Without arguments: agents review the diff between this branch and main.
+ * Examples:
+ *   council review 123            Review PR #123
+ *   council review                Review current branch vs main
+ *   council fix ISSUE-456         Fix an issue
+ *   council explain "the auth flow"
  */
 
-import type { ReviewTarget } from "./config.ts"
-import { DEFAULT_CONFIG } from "./config.ts"
+import { loadConfig } from "./config.ts"
+import { init } from "./init.ts"
 import { launchAllAgents } from "./launch.ts"
 import { detectTerminal } from "./terminal/index.ts"
 
-function parseTarget(args: readonly string[]): ReviewTarget {
-  if (args.length > 1) {
-    console.error("Usage: review-cli [pr-number]")
+async function main(): Promise<void> {
+  const args = process.argv.slice(2)
+
+  if (args.length === 0) {
+    console.error("Usage: council <command> [arg]")
+    console.error("       council init")
     process.exit(1)
   }
 
-  const prNumber = args[0]
+  const commandName = args[0]!
 
-  if (prNumber) {
-    return { mode: "pr", prNumber }
+  if (commandName === "init") {
+    await init()
+    return
   }
 
-  return { mode: "diff" }
-}
-
-function describeTarget(target: ReviewTarget): string {
-  if (target.mode === "pr") {
-    return `PR #${target.prNumber}`
-  }
-  return "current branch vs main"
-}
-
-async function main(): Promise<void> {
   const { kind, terminal } = detectTerminal()
-  const args = process.argv.slice(2)
-  const target = parseTarget(args)
+  const config = await loadConfig()
+  const arg = args[1]
 
+  if (args.length > 2) {
+    console.error("Usage: council <command> [arg]")
+    process.exit(1)
+  }
+
+  const description = arg ? `${commandName} ${arg}` : commandName
   console.log(
-    `[${kind}] Launching ${DEFAULT_CONFIG.agents.length} agents to review ${describeTarget(target)}...`
+    `[${kind}] Launching ${config.agents.length} agents: ${description}`
   )
 
-  const results = await launchAllAgents(terminal, DEFAULT_CONFIG, target)
+  const results = await launchAllAgents(terminal, config, commandName, arg)
 
   for (const result of results) {
     console.log(`  ${result.agent.name} -> ${result.pane.id}`)
@@ -53,4 +56,8 @@ async function main(): Promise<void> {
   console.log("All agents launched.")
 }
 
-main()
+main().catch((error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error)
+  console.error(message)
+  process.exit(1)
+})

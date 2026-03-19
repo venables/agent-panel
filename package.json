@@ -1,7 +1,7 @@
 {
-  "name": "@startkit-dev/base",
-  "version": "0.0.1",
-  "description": "A sane way to start your next TypeScript project",
+  "name": "council",
+  "version": "0.1.0",
+  "description": "Launch multiple AI coding agents in parallel terminal splits",
   "license": "MIT",
   "type": "module",
   "module": "src/index.ts",
@@ -22,6 +22,9 @@
     "start": "bun ./dist/index.mjs",
     "test": "bun test --pass-with-no-tests",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bun": "latest",
