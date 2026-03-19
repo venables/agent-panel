@@ -1,0 +1,35 @@
+{
+  "name": "@startkit-dev/base",
+  "version": "0.0.1",
+  "description": "A sane way to start your next TypeScript project",
+  "license": "MIT",
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "build": "tsdown",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test",
+    "clean": "git clean -xdf node_modules/.cache dist",
+    "dev": "bun src/index.ts",
+    "fix": "bun run format && bun run lint:fix",
+    "format": "oxfmt",
+    "format:check": "bun run format -- --check",
+    "lint": "oxlint --type-aware",
+    "lint:fix": "bun lint -- --fix --fix-suggestions",
+    "lint:fixall": "bun lint:fix -- --fix-dangerously",
+    "nuke": "bun run clean && git clean -xdf node_modules",
+    "outdated": "bunx npm-check-updates --interactive --format group",
+    "start": "bun ./dist/index.mjs",
+    "test": "bun test --pass-with-no-tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxfmt": "latest",
+    "oxlint": "latest",
+    "oxlint-tsgolint": "latest",
+    "tsdown": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
