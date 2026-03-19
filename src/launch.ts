@@ -4,6 +4,7 @@
 
 import type { AgentConfig, Config } from "./config.ts"
 import { resolveAgentCommand, resolveCommandPrompt } from "./config.ts"
+import { sleep } from "./exec.ts"
 import type { PaneHandle, Terminal } from "./terminal/terminal.ts"
 
 /** Result of launching a single agent. */
@@ -70,7 +71,7 @@ export async function launchAllAgents(
       pane = terminal.currentPane()
     } else {
       pane = await terminal.createSplit()
-      await Bun.sleep(500)
+      await sleep(500)
     }
 
     const result = await launchInPane(terminal, agent, shellCommand, pane)

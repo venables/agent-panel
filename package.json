@@ -1,10 +1,31 @@
 {
-  "name": "panel",
+  "name": "@anthropic-ai/panel",
   "version": "0.1.0",
   "description": "Launch multiple AI coding agents in parallel terminal splits",
+  "keywords": [
+    "agents",
+    "ai",
+    "claude",
+    "cli",
+    "code-review",
+    "codex",
+    "multi-agent",
+    "opencode",
+    "splits",
+    "terminal"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/panel"
+  },
+  "bin": {
+    "panel": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
-  "module": "src/index.ts",
   "scripts": {
     "build": "tsdown",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun run test",
@@ -35,5 +56,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

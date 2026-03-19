@@ -8,28 +8,17 @@
  * increments the index.
  */
 
+import { run } from "../exec.ts"
 import type { PaneHandle, Terminal } from "./terminal.ts"
 
 /**
- * Runs an AppleScript snippet against the Ghostty application.
+ * Runs an AppleScript snippet via osascript.
  *
  * @param script - The AppleScript code to execute
  * @returns stdout from osascript
  */
 async function runAppleScript(script: string): Promise<string> {
-  const proc = Bun.spawn(["osascript", "-e", script], {
-    stdout: "pipe",
-    stderr: "pipe"
-  })
-
-  const output = await new Response(proc.stdout).text()
-  const exitCode = await proc.exited
-
-  if (exitCode !== 0) {
-    const stderr = await new Response(proc.stderr).text()
-    throw new Error(`osascript failed (exit ${exitCode}): ${stderr}`)
-  }
-
+  const output = await run("osascript", ["-e", script])
   return output.trim()
 }
 

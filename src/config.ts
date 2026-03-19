@@ -4,6 +4,7 @@
  * Config file: ~/.config/panel/config.jsonc
  */
 
+import { readFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { join } from "node:path"
 
@@ -64,16 +65,16 @@ function stripJsonc(input: string): string {
  */
 export async function loadConfig(): Promise<Config> {
   const path = configPath()
-  const file = Bun.file(path)
-  const exists = await file.exists()
 
-  if (!exists) {
+  let raw: string
+  try {
+    raw = await readFile(path, "utf-8")
+  } catch {
     throw new Error(
       `Config file not found: ${path}\nRun 'panel init' to create a default config.`
     )
   }
 
-  const raw = await file.text()
   const json: unknown = JSON.parse(stripJsonc(raw))
   return ConfigSchema.parse(json)
 }

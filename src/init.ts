@@ -4,7 +4,7 @@
  * Creates the default config file at ~/.config/panel/config.jsonc.
  */
 
-import { mkdir } from "node:fs/promises"
+import { access, mkdir, writeFile } from "node:fs/promises"
 import { dirname } from "node:path"
 
 import { configPath, DEFAULT_CONFIG_CONTENT } from "./config.ts"
@@ -14,8 +14,10 @@ import { configPath, DEFAULT_CONFIG_CONTENT } from "./config.ts"
  */
 export async function init(): Promise<void> {
   const path = configPath()
-  const file = Bun.file(path)
-  const exists = await file.exists()
+
+  const exists = await access(path)
+    .then(() => true)
+    .catch(() => false)
 
   if (exists) {
     console.error(`Config already exists: ${path}`)
@@ -24,7 +26,7 @@ export async function init(): Promise<void> {
   }
 
   await mkdir(dirname(path), { recursive: true })
-  await Bun.write(path, DEFAULT_CONFIG_CONTENT)
+  await writeFile(path, DEFAULT_CONFIG_CONTENT, "utf-8")
 
   console.log(`Created config: ${path}`)
 }
