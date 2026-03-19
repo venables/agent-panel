@@ -42,9 +42,11 @@ export type AgentConfig = z.infer<typeof AgentSchema>
 export type CommandConfig = z.infer<typeof CommandSchema>
 export type Config = z.infer<typeof ConfigSchema>
 
-/** Returns the path to the config file. */
+/** Returns the path to the config file, respecting XDG_CONFIG_HOME. */
 export function configPath(): string {
-  return join(homedir(), ".config", APP_NAME, "config.jsonc")
+  const configHome =
+    process.env["XDG_CONFIG_HOME"] || join(homedir(), ".config")
+  return join(configHome, APP_NAME, "config.jsonc")
 }
 
 /**
@@ -131,7 +133,7 @@ export const DEFAULT_CONFIG_CONTENT = `{
   "commands": {
     "review": {
       "prompt": "Review PR {{arg}}. Leave comments in this session and not on the PR itself.",
-      "promptNoArg": "Review all changes between this branch and main, including any dirty or unstaged files. Leave comments in this session and not on the PR itself."
+      "promptNoArg": "Review all changes between this branch and origin/main, including any dirty or unstaged files. Leave comments in this session and not on the PR itself."
     },
     "fix": {
       "prompt": "Fix issue {{arg}}. Implement the fix and show me what you changed.",
