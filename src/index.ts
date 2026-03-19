@@ -1,5 +1,63 @@
-function main() {
-  console.log("Hello, World!")
+/**
+ * CLI entry point for review-cli.
+ *
+ * Usage:
+ *   bun run cli [pr-number]
+ *
+ * With a PR number: agents review that PR.
+ * Without arguments: agents review the diff between this branch and main.
+ */
+
+import type { ReviewTarget } from "./config.ts"
+import { DEFAULT_CONFIG } from "./config.ts"
+import { launchAllAgents } from "./launch.ts"
+
+function parseTarget(args: readonly string[]): ReviewTarget {
+  if (args.length > 1) {
+    console.error("Usage: review-cli [pr-number]")
+    process.exit(1)
+  }
+
+  const prNumber = args[0]
+
+  if (prNumber) {
+    return { mode: "pr", prNumber }
+  }
+
+  return { mode: "diff" }
+}
+
+function describeTarget(target: ReviewTarget): string {
+  if (target.mode === "pr") {
+    return `PR #${target.prNumber}`
+  }
+  return "current branch vs main"
+}
+
+async function main(): Promise<void> {
+  const currentSurface = process.env["CMUX_SURFACE_ID"]
+
+  if (!currentSurface) {
+    console.error(
+      "CMUX_SURFACE_ID not set. Run this from inside a cmux terminal."
+    )
+    process.exit(1)
+  }
+
+  const args = process.argv.slice(2)
+  const target = parseTarget(args)
+
+  console.log(
+    `Launching ${DEFAULT_CONFIG.agents.length} agents to review ${describeTarget(target)}...`
+  )
+
+  const results = await launchAllAgents(DEFAULT_CONFIG, target, currentSurface)
+
+  for (const result of results) {
+    console.log(`  ${result.agent.name} -> surface ${result.surfaceId}`)
+  }
+
+  console.log("All agents launched.")
 }
 
 main()

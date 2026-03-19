@@ -9,6 +9,7 @@
     "build": "tsdown",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun run test",
     "clean": "git clean -xdf node_modules/.cache dist",
+    "cli": "bun src/index.ts",
     "dev": "bun src/index.ts",
     "fix": "bun run format && bun run lint:fix",
     "format": "oxfmt",
