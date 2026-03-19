@@ -1,15 +1,15 @@
 /**
- * CLI entry point for council.
+ * CLI entry point for panel.
  *
  * Usage:
- *   council init                  Create default config
- *   council <command> [arg]       Run a command from config
+ *   panel init                  Create default config
+ *   panel <command> [arg]       Run a command from config
  *
  * Examples:
- *   council review 123            Review PR #123
- *   council review                Review current branch vs main
- *   council fix ISSUE-456         Fix an issue
- *   council explain "the auth flow"
+ *   panel review 123            Review PR #123
+ *   panel review                Review current branch vs main
+ *   panel fix ISSUE-456         Fix an issue
+ *   panel explain "the auth flow"
  */
 
 import { loadConfig } from "./config.ts"
@@ -21,8 +21,8 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2)
 
   if (args.length === 0) {
-    console.error("Usage: council <command> [arg]")
-    console.error("       council init")
+    console.error("Usage: panel <command> [arg]")
+    console.error("       panel init")
     process.exit(1)
   }
 
@@ -38,7 +38,7 @@ async function main(): Promise<void> {
   const arg = args[1]
 
   if (args.length > 2) {
-    console.error("Usage: council <command> [arg]")
+    console.error("Usage: panel <command> [arg]")
     process.exit(1)
   }
 

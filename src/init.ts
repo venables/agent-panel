@@ -1,7 +1,7 @@
 /**
- * Handles the `council init` command.
+ * Handles the `panel init` command.
  *
- * Creates the default config file at ~/.config/council/config.jsonc.
+ * Creates the default config file at ~/.config/panel/config.jsonc.
  */
 
 import { mkdir } from "node:fs/promises"

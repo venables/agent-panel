@@ -1,7 +1,7 @@
 /**
- * Configuration schema and loading for council.
+ * Configuration schema and loading for panel.
  *
- * Config file: ~/.config/council/config.jsonc
+ * Config file: ~/.config/panel/config.jsonc
  */
 
 import { homedir } from "node:os"
@@ -9,7 +9,7 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-const APP_NAME = "council"
+const APP_NAME = "panel"
 
 /** Schema for a single agent. */
 const AgentSchema = z.object({
@@ -69,7 +69,7 @@ export async function loadConfig(): Promise<Config> {
 
   if (!exists) {
     throw new Error(
-      `Config file not found: ${path}\nRun 'council init' to create a default config.`
+      `Config file not found: ${path}\nRun 'panel init' to create a default config.`
     )
   }
 
@@ -117,7 +117,7 @@ export function resolveAgentCommand(
   return agent.command.replace("{{prompt}}", prompt)
 }
 
-/** Default config written by `council init`. */
+/** Default config written by `panel init`. */
 export const DEFAULT_CONFIG_CONTENT = `{
   // Agent definitions -- each needs a {{prompt}} placeholder in command
   "agents": [
