@@ -15,7 +15,7 @@ import { execFile } from "node:child_process"
  */
 export function run(command: string, args: readonly string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile(command, [...args], (error, stdout, stderr) => {
+    execFile(command, args, (error, stdout, stderr) => {
       if (error) {
         reject(
           new Error(`${command} ${args[0]} failed: ${stderr || error.message}`)

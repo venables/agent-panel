@@ -60,23 +60,24 @@ export async function launchAllAgents(
   }
 
   const prompt = resolveCommandPrompt(command, arg)
-  const results: LaunchResult[] = []
 
-  for (let i = 0; i < config.agents.length; i++) {
-    const agent = config.agents[i]!
+  const results: readonly LaunchResult[] = await config.agents.reduce<
+    Promise<readonly LaunchResult[]>
+  >(async (prev, agent, i) => {
+    const acc = await prev
     const shellCommand = resolveAgentCommand(agent, prompt)
 
-    let pane: PaneHandle
-    if (i === 0) {
-      pane = terminal.currentPane()
-    } else {
-      pane = await terminal.createSplit()
-      await sleep(500)
-    }
+    const pane =
+      i === 0
+        ? terminal.currentPane()
+        : await terminal.createSplit().then(async (p) => {
+            await sleep(500)
+            return p
+          })
 
     const result = await launchInPane(terminal, agent, shellCommand, pane)
-    results.push(result)
-  }
+    return [...acc, result]
+  }, Promise.resolve([]))
 
   return results
 }

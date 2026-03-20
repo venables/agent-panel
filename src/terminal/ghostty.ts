@@ -56,7 +56,12 @@ end tell`
     },
 
     async sendText(pane: PaneHandle, text: string): Promise<void> {
-      const escaped = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+      const escaped = text
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t")
       const ref = terminalRef(pane)
 
       const script = `tell application "Ghostty"
@@ -67,10 +72,21 @@ end tell`
     },
 
     async sendKey(pane: PaneHandle, key: string): Promise<void> {
+      const keyMap: Record<string, string> = {
+        enter: "\\n",
+        tab: "\\t",
+        escape: "\\u001b"
+      }
+      const char = keyMap[key.toLowerCase()]
+
+      if (!char) {
+        throw new Error(`Unsupported key for Ghostty: "${key}"`)
+      }
+
       const ref = terminalRef(pane)
 
       const script = `tell application "Ghostty"
-  send key "${key.toLowerCase()}" to ${ref}
+  input text "${char}" to ${ref}
 end tell`
 
       await runAppleScript(script)

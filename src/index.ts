@@ -38,8 +38,8 @@ async function main(): Promise<void> {
     return
   }
 
-  const { kind, terminal } = detectTerminal()
   const config = await loadConfig()
+  const { kind, terminal } = detectTerminal()
   const arg = args[1]
 
   if (args.length > 2) {

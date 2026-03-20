@@ -17,20 +17,28 @@ const AgentSchema = z.object({
   name: z.string(),
   command: z
     .string()
+    .refine((cmd) => cmd.includes("{{prompt}}"), {
+      message: "Agent command must include a {{prompt}} placeholder"
+    })
     .describe("Shell command template with {{prompt}} placeholder")
 })
 
 /** Schema for a single command definition. */
-const CommandSchema = z.object({
-  prompt: z
-    .string()
-    .describe("Prompt template with optional {{arg}} placeholder"),
-  promptNoArg: z
-    .string()
-    .optional()
-    .describe("Fallback prompt when no arg is given"),
-  requiresArg: z.boolean().optional().default(false)
-})
+const CommandSchema = z
+  .object({
+    prompt: z
+      .string()
+      .describe("Prompt template with optional {{arg}} placeholder"),
+    promptNoArg: z
+      .string()
+      .optional()
+      .describe("Fallback prompt when no arg is given"),
+    requiresArg: z.boolean().optional().default(false)
+  })
+  .refine(
+    (cmd) => !cmd.requiresArg || cmd.prompt.includes("{{arg}}"),
+    "Command with requiresArg must include {{arg}} in prompt"
+  )
 
 /** Schema for the full config file. */
 const ConfigSchema = z.object({
@@ -52,11 +60,52 @@ export function configPath(): string {
 /**
  * Strips single-line // comments and trailing commas from JSONC.
  *
+ * Handles // inside quoted strings correctly by walking char-by-char.
+ *
  * @param input - JSONC string
  * @returns Valid JSON string
  */
-function stripJsonc(input: string): string {
-  return input.replace(/\/\/.*$/gm, "").replace(/,(\s*[}\]])/g, "$1")
+export function stripJsonc(input: string): string {
+  let result = ""
+  let inString = false
+  let i = 0
+
+  while (i < input.length) {
+    const ch = input[i]!
+
+    if (inString) {
+      result += ch
+      if (ch === "\\" && i + 1 < input.length) {
+        result += input[i + 1]!
+        i += 2
+        continue
+      }
+      if (ch === '"') {
+        inString = false
+      }
+      i++
+      continue
+    }
+
+    if (ch === '"') {
+      inString = true
+      result += ch
+      i++
+      continue
+    }
+
+    if (ch === "/" && i + 1 < input.length && input[i + 1] === "/") {
+      while (i < input.length && input[i] !== "\n") {
+        i++
+      }
+      continue
+    }
+
+    result += ch
+    i++
+  }
+
+  return result.replace(/,(\s*[}\]])/g, "$1")
 }
 
 /**
