@@ -6,6 +6,7 @@
  *   panel run <command> [arg]      Run a configured command
  *   panel init                     Create default config
  *   panel list                     List configured commands
+ *   panel config                   Open config in $EDITOR
  *
  * Examples:
  *   panel what are some ways to improve this
@@ -14,6 +15,7 @@
  */
 
 import { loadConfig } from "./config.ts"
+import { editConfig } from "./edit-config.ts"
 import { init } from "./init.ts"
 import { launchAgents, launchCommand } from "./launch.ts"
 import type { LaunchResult } from "./launch.ts"
@@ -44,6 +46,11 @@ async function main(): Promise<void> {
 
   if (subcommand === "list") {
     await list()
+    return
+  }
+
+  if (subcommand === "config") {
+    await editConfig()
     return
   }
 

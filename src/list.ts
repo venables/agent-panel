@@ -44,6 +44,7 @@ export async function printUsage(): Promise<void> {
   console.log("       panel run <command> [arg]")
   console.log("       panel init")
   console.log("       panel list")
+  console.log("       panel config")
   console.log("")
 
   try {
