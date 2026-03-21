@@ -48,7 +48,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "citty": "^0.2.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
