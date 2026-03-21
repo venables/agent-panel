@@ -44,7 +44,7 @@
     "nuke": "bun run clean && git clean -xdf node_modules",
     "outdated": "bunx npm-check-updates --interactive --format group",
     "start": "bun ./dist/index.mjs",
-    "test": "bun test --pass-with-no-tests",
+    "test": "bun test --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

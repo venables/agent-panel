@@ -34,7 +34,7 @@ async function main(): Promise<void> {
 
   if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
     await printUsage()
-    process.exit(args.length === 0 ? 1 : 0)
+    process.exit(0)
   }
 
   const subcommand = args[0]!
