@@ -15,15 +15,6 @@ import { loadConfig } from "./config.ts"
 import { launchAgents } from "./launch.ts"
 import { detectTerminal } from "./terminal/index.ts"
 
-const SUB_COMMANDS = {
-  init: () => import("./commands/init.ts").then((m) => m.default),
-  list: () => import("./commands/list.ts").then((m) => m.default),
-  config: () => import("./commands/config.ts").then((m) => m.default),
-  run: () => import("./commands/run.ts").then((m) => m.default)
-} as const
-
-const SUB_COMMAND_NAMES = new Set<string>(Object.keys(SUB_COMMANDS))
-
 const main = defineCommand({
   meta: {
     name: "panel",
@@ -37,11 +28,16 @@ const main = defineCommand({
       required: false
     }
   },
-  subCommands: SUB_COMMANDS,
+  subCommands: {
+    init: () => import("./commands/init.ts").then((m) => m.default),
+    list: () => import("./commands/list.ts").then((m) => m.default),
+    config: () => import("./commands/config.ts").then((m) => m.default),
+    run: () => import("./commands/run.ts").then((m) => m.default)
+  },
   async run({ rawArgs }) {
     const prompt = rawArgs.join(" ")
 
-    if (!prompt || SUB_COMMAND_NAMES.has(rawArgs[0] ?? "")) {
+    if (!prompt) {
       return
     }
 
