@@ -1,7 +1,7 @@
 /**
- * Handles the `panel list` command and usage display.
+ * Handles the `panel list` command.
  *
- * Shows available commands from the user's config.
+ * Shows available commands and agents from the user's config.
  */
 
 import type { Config } from "./config.ts"
@@ -37,26 +37,7 @@ function printConfigSummary(config: Config): void {
 }
 
 /**
- * Prints full usage help, including available commands if config exists.
- */
-export async function printUsage(): Promise<void> {
-  console.log("Usage: panel <prompt...>")
-  console.log("       panel run <command> [arg]")
-  console.log("       panel init")
-  console.log("       panel list")
-  console.log("       panel config")
-  console.log("")
-
-  try {
-    const config = await loadConfig()
-    printConfigSummary(config)
-  } catch {
-    console.log(`No config found. Run 'panel init' to get started.`)
-  }
-}
-
-/**
- * Handles the `panel list` command.
+ * Loads config and prints a summary of commands and agents.
  */
 export async function list(): Promise<void> {
   const config = await loadConfig()

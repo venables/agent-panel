@@ -160,7 +160,7 @@ export function createGhosttyTerminal(): Terminal {
           "on run argv",
           '  tell application "Ghostty"',
           "    set targetTerminal to first terminal whose id is item 2 of argv",
-          '    send key (item 1 of argv) to targetTerminal',
+          "    send key (item 1 of argv) to targetTerminal",
           "  end tell",
           "end run"
         ],
