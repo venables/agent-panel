@@ -9,8 +9,25 @@ import { existsSync } from "node:fs"
 
 import { configPath } from "./config.ts"
 
-function resolveEditor(): string {
-  return process.env["EDITOR"] || process.env["VISUAL"] || "vi"
+/** Resolved editor command and any flags (e.g. "code -w" -> ["code", "-w"]). */
+interface EditorCommand {
+  readonly command: string
+  readonly args: readonly string[]
+}
+
+/**
+ * Resolves the user's preferred editor from $EDITOR, $VISUAL, or "vi".
+ *
+ * Splits the value on whitespace so flags like "code -w" or "nvim -u ..."
+ * are handled correctly.
+ */
+function resolveEditor(): EditorCommand {
+  const raw = process.env["EDITOR"] || process.env["VISUAL"] || "vi"
+  const parts = raw.split(/\s+/).filter(Boolean)
+  return {
+    command: parts[0] ?? "vi",
+    args: parts.slice(1)
+  }
 }
 
 /**
@@ -30,18 +47,24 @@ export async function editConfig(): Promise<void> {
   const editor = resolveEditor()
 
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(editor, [path], { stdio: "inherit" })
+    const child = spawn(editor.command, [...editor.args, path], {
+      stdio: "inherit"
+    })
 
     child.on("close", (code) => {
       if (code === 0) {
         resolve()
       } else {
-        reject(new Error(`${editor} exited with code ${code}`))
+        reject(new Error(`${editor.command} exited with code ${code}`))
       }
     })
 
     child.on("error", (error) => {
-      reject(new Error(`Failed to launch editor "${editor}": ${error.message}`))
+      reject(
+        new Error(
+          `Failed to launch editor "${editor.command}": ${error.message}`
+        )
+      )
     })
   })
 }
