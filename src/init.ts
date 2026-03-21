@@ -1,7 +1,7 @@
 /**
  * Handles the `panel init` command.
  *
- * Creates the default config file at ~/.config/panel/config.jsonc.
+ * Creates the default config file at ~/.config/agent-panel/config.jsonc.
  */
 
 import { access, mkdir, writeFile } from "node:fs/promises"

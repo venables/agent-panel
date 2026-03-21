@@ -32,6 +32,9 @@ panel fix ISSUE-456
 
 # Explain something in the codebase
 panel explain "the auth flow"
+
+# Send a raw prompt to all agents
+panel what are some ways to improve the error handling here
 ```
 
 The `agent-panel` command also works as an alias for `panel`.
@@ -39,7 +42,7 @@ The `agent-panel` command also works as an alias for `panel`.
 ## How it works
 
 1. Detects your terminal (cmux or Ghostty)
-2. Loads commands and agents from `~/.config/panel/config.jsonc`
+2. Loads commands and agents from `~/.config/agent-panel/config.jsonc`
 3. Opens N terminal splits (one per agent)
 4. Sends each agent the same prompt
 
@@ -48,15 +51,17 @@ split to the right.
 
 ## Configuration
 
-Run `panel init` to create `~/.config/panel/config.jsonc`:
+Run `panel init` to create `~/.config/agent-panel/config.jsonc`:
 
 ```jsonc
 {
+  "$schema": "https://raw.githubusercontent.com/venables/agent-panel/main/config.schema.json",
+
   // Each agent needs a {{prompt}} placeholder in its command
   "agents": [
-    { "name": "claude", "command": "claude \"{{prompt}}\"" },
-    { "name": "codex", "command": "codex \"{{prompt}}\"" },
-    { "name": "opencode", "command": "opencode --prompt \"{{prompt}}\"" }
+    { "name": "claude", "command": "claude {{prompt}}" },
+    { "name": "codex", "command": "codex {{prompt}}" },
+    { "name": "opencode", "command": "opencode --prompt {{prompt}}" }
   ],
 
   // Commands use {{arg}} for the optional argument
@@ -76,6 +81,20 @@ Run `panel init` to create `~/.config/panel/config.jsonc`:
   }
 }
 ```
+
+The `$schema` field enables autocompletion and validation in editors that
+support JSON Schema (VS Code, Zed, JetBrains, etc.).
+
+### Editing your config
+
+Open the config in your editor:
+
+```bash
+panel config
+```
+
+This launches `$EDITOR` (or `$VISUAL`, or `vi` as a fallback) with the config
+file.
 
 ### Adding a command
 
@@ -107,6 +126,16 @@ with `{{prompt}}` as the placeholder:
 { "name": "aider", "command": "aider --message \"{{prompt}}\"" }
 ```
 
+## CLI reference
+
+```
+panel <prompt...>              Launch agents with a raw prompt
+panel run <command> [arg]      Run a configured command
+panel init                     Create default config
+panel list                     List configured commands and agents
+panel config                   Open config in $EDITOR
+```
+
 ## Development
 
 ```bash
@@ -134,6 +163,8 @@ src/
   config.ts             Config schema, loading, validation (zod)
   launch.ts             Agent orchestration
   init.ts               `panel init` command
+  edit-config.ts        `panel config` command
+  list.ts               `panel list` command
   exec.ts               Node-compatible process utilities
   terminal/
     terminal.ts         Terminal interface

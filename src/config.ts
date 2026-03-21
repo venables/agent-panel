@@ -1,7 +1,7 @@
 /**
  * Configuration schema and loading for panel.
  *
- * Config file: ~/.config/panel/config.jsonc
+ * Config file: ~/.config/agent-panel/config.jsonc
  */
 
 import { readFile } from "node:fs/promises"
@@ -12,7 +12,7 @@ import { z } from "zod"
 
 import { shellEscape } from "./exec.ts"
 
-const APP_NAME = "panel"
+const APP_NAME = "agent-panel"
 
 /** Schema for a single agent. */
 const AgentSchema = z.object({
