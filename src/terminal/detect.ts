@@ -35,6 +35,11 @@ export function detectTerminal(): DetectResult {
 
   const termProgram = process.env["TERM_PROGRAM"]
   if (termProgram === "ghostty") {
+    if (process.platform !== "darwin") {
+      throw new Error(
+        "Ghostty terminal support is macOS-only (requires AppleScript)."
+      )
+    }
     return {
       kind: "ghostty",
       terminal: createGhosttyTerminal()
