@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Panel Config",
+  "description": "Configuration for agent-panel CLI",
+  "type": "object",
+  "required": ["agents", "commands"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path to the JSON schema file"
+    },
+    "agents": {
+      "type": "array",
+      "description": "Agent definitions. Each agent runs in its own terminal split.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "command"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the agent"
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command template. Must include {{prompt}} placeholder.",
+            "pattern": "\\{\\{prompt\\}\\}"
+          }
+        }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "description": "Named command shortcuts. Use {{arg}} for the optional argument placeholder.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["prompt"],
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Prompt template. Use {{arg}} for the optional argument placeholder."
+          },
+          "promptNoArg": {
+            "type": "string",
+            "description": "Fallback prompt when no argument is provided"
+          },
+          "requiresArg": {
+            "type": "boolean",
+            "description": "Whether this command requires an argument",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}

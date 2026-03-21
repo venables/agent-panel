@@ -44,6 +44,7 @@ const CommandSchema = z
 
 /** Schema for the full config file. */
 const ConfigSchema = z.object({
+  $schema: z.string().optional(),
   agents: z.array(AgentSchema).min(1),
   commands: z.record(z.string(), CommandSchema)
 })
@@ -186,6 +187,8 @@ export function resolveAgentCommand(
 
 /** Default config written by `panel init`. */
 export const DEFAULT_CONFIG_CONTENT = `{
+  "$schema": "https://raw.githubusercontent.com/venables/agent-panel/main/config.schema.json",
+
   // Agent definitions -- each needs a {{prompt}} placeholder in command
   "agents": [
     { "name": "claude", "command": "claude {{prompt}}" },
