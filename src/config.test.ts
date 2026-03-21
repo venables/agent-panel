@@ -49,6 +49,11 @@ describe("stripJsonc", () => {
     const input = `{ "items": [1, 2, 3,] }`
     expect(JSON.parse(stripJsonc(input))).toEqual({ items: [1, 2, 3] })
   })
+
+  test("preserves commas inside strings followed by a bracket", () => {
+    const input = `{ "key": "value, }" }`
+    expect(JSON.parse(stripJsonc(input))).toEqual({ key: "value, }" })
+  })
 })
 
 describe("resolveCommandPrompt", () => {
@@ -83,6 +88,21 @@ describe("resolveCommandPrompt", () => {
     expect(resolveCommandPrompt(command, undefined)).toBe("Review PR.")
   })
 
+  test("substitutes multiple {{arg}} placeholders", () => {
+    const command = {
+      prompt: "Fix {{arg}} because {{arg}} is broken.",
+      requiresArg: false
+    }
+    expect(resolveCommandPrompt(command, "it")).toBe(
+      "Fix it because it is broken."
+    )
+  })
+
+  test("strips multiple {{arg}} placeholders when no arg", () => {
+    const command = { prompt: "Fix {{arg}} and {{arg}}.", requiresArg: false }
+    expect(resolveCommandPrompt(command, undefined)).toBe("Fix and.")
+  })
+
   test("throws when arg is required but not provided", () => {
     const command = {
       prompt: "Fix issue {{arg}}.",
@@ -95,10 +115,34 @@ describe("resolveCommandPrompt", () => {
 })
 
 describe("resolveAgentCommand", () => {
-  test("substitutes {{prompt}} into agent command", () => {
-    const agent = { name: "claude", command: 'claude "{{prompt}}"' }
+  test("substitutes {{prompt}} with shell-escaped value", () => {
+    const agent = { name: "claude", command: "claude {{prompt}}" }
     expect(resolveAgentCommand(agent, "Hello world")).toBe(
-      'claude "Hello world"'
+      "claude 'Hello world'"
+    )
+  })
+
+  test("escapes shell metacharacters in prompt", () => {
+    const agent = { name: "claude", command: "claude {{prompt}}" }
+    expect(resolveAgentCommand(agent, "$(rm -rf ~)")).toBe(
+      "claude '$(rm -rf ~)'"
+    )
+  })
+
+  test("escapes single quotes in prompt", () => {
+    const agent = { name: "claude", command: "claude {{prompt}}" }
+    expect(resolveAgentCommand(agent, "it's a test")).toBe(
+      "claude 'it'\\''s a test'"
+    )
+  })
+
+  test("substitutes multiple {{prompt}} placeholders", () => {
+    const agent = {
+      name: "claude",
+      command: "echo {{prompt}} | claude {{prompt}}"
+    }
+    expect(resolveAgentCommand(agent, "hello")).toBe(
+      "echo 'hello' | claude 'hello'"
     )
   })
 })

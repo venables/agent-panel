@@ -22,32 +22,33 @@ function formatCommand(
 }
 
 /**
- * Prints available commands from the config.
+ * Prints available commands and agent summary from the config.
  *
  * @param config - The loaded config
  */
-function printCommands(config: Config): void {
+function printConfigSummary(config: Config): void {
   console.log(`Commands (from ${configPath()}):`)
   for (const [name, command] of Object.entries(config.commands)) {
-    console.log(`  panel ${formatCommand(name, command)}`)
+    console.log(`  panel run ${formatCommand(name, command)}`)
   }
+  console.log("")
+  console.log(`Agents: ${config.agents.map((a) => a.name).join(", ")}`)
+  console.log(`Config: ${configPath()}`)
 }
 
 /**
  * Prints full usage help, including available commands if config exists.
  */
 export async function printUsage(): Promise<void> {
-  console.log("Usage: panel <command> [arg]")
+  console.log("Usage: panel <prompt...>")
+  console.log("       panel run <command> [arg]")
   console.log("       panel init")
   console.log("       panel list")
   console.log("")
 
   try {
     const config = await loadConfig()
-    printCommands(config)
-    console.log("")
-    console.log(`Agents: ${config.agents.map((a) => a.name).join(", ")}`)
-    console.log(`Config: ${configPath()}`)
+    printConfigSummary(config)
   } catch {
     console.log(`No config found. Run 'panel init' to get started.`)
   }
@@ -58,8 +59,5 @@ export async function printUsage(): Promise<void> {
  */
 export async function list(): Promise<void> {
   const config = await loadConfig()
-  printCommands(config)
-  console.log("")
-  console.log(`Agents: ${config.agents.map((a) => a.name).join(", ")}`)
-  console.log(`Config: ${configPath()}`)
+  printConfigSummary(config)
 }

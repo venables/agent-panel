@@ -9,16 +9,26 @@
  */
 
 import { run } from "../exec.ts"
+import { sleep } from "../exec.ts"
 import type { PaneHandle, Terminal } from "./terminal.ts"
+
+/** Delay after creating a split to let Ghostty render the new pane. */
+const SPLIT_SETTLE_MS = 500
 
 /**
  * Runs an AppleScript snippet via osascript.
  *
- * @param script - The AppleScript code to execute
+ * @param lines - The AppleScript lines to execute (each becomes a -e arg)
+ * @param args - Optional arguments passed to the script's `on run argv` handler
  * @returns stdout from osascript
  */
-async function runAppleScript(script: string): Promise<string> {
-  const output = await run("osascript", ["-e", script])
+async function runAppleScript(
+  lines: readonly string[],
+  args?: readonly string[]
+): Promise<string> {
+  const scriptArgs = lines.flatMap((line) => ["-e", line])
+  const trailingArgs = args && args.length > 0 ? ["--", ...args] : []
+  const output = await run("osascript", [...scriptArgs, ...trailingArgs])
   return output.trim()
 }
 
@@ -30,6 +40,25 @@ async function runAppleScript(script: string): Promise<string> {
  */
 function terminalRef(pane: PaneHandle): string {
   return `terminal ${pane.id} of selected tab of front window`
+}
+
+/**
+ * Sends text to a Ghostty pane via AppleScript's `on run argv` handler.
+ *
+ * @param ref - The AppleScript terminal reference
+ * @param text - The text to send
+ */
+async function inputText(ref: string, text: string): Promise<void> {
+  await runAppleScript(
+    [
+      "on run argv",
+      '  tell application "Ghostty"',
+      `    input text (item 1 of argv) to ${ref}`,
+      "  end tell",
+      "end run"
+    ],
+    [text]
+  )
 }
 
 export function createGhosttyTerminal(): Terminal {
@@ -45,37 +74,27 @@ export function createGhosttyTerminal(): Terminal {
     async createSplit(): Promise<PaneHandle> {
       const currentRef = terminalRef({ id: String(terminalCount) })
 
-      const script = `tell application "Ghostty"
-  split (${currentRef}) direction right
-end tell`
+      await runAppleScript([
+        'tell application "Ghostty"',
+        `  split (${currentRef}) direction right`,
+        "end tell"
+      ])
 
-      await runAppleScript(script)
+      await sleep(SPLIT_SETTLE_MS)
 
       terminalCount++
       return { id: String(terminalCount) }
     },
 
     async sendText(pane: PaneHandle, text: string): Promise<void> {
-      const escaped = text
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, "\\n")
-        .replace(/\r/g, "\\r")
-        .replace(/\t/g, "\\t")
-      const ref = terminalRef(pane)
-
-      const script = `tell application "Ghostty"
-  input text "${escaped}" to ${ref}
-end tell`
-
-      await runAppleScript(script)
+      await inputText(terminalRef(pane), text)
     },
 
     async sendKey(pane: PaneHandle, key: string): Promise<void> {
       const keyMap: Record<string, string> = {
-        enter: "\\n",
-        tab: "\\t",
-        escape: "\\u001b"
+        enter: "\r",
+        tab: "\t",
+        escape: "\u001b"
       }
       const char = keyMap[key.toLowerCase()]
 
@@ -83,13 +102,7 @@ end tell`
         throw new Error(`Unsupported key for Ghostty: "${key}"`)
       }
 
-      const ref = terminalRef(pane)
-
-      const script = `tell application "Ghostty"
-  input text "${char}" to ${ref}
-end tell`
-
-      await runAppleScript(script)
+      await inputText(terminalRef(pane), char)
     }
   }
 }

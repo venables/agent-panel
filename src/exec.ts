@@ -28,6 +28,20 @@ export function run(command: string, args: readonly string[]): Promise<string> {
 }
 
 /**
+ * Wraps a string in single quotes for safe shell interpolation.
+ *
+ * Single-quoted strings have no shell expansion (no $, no backticks, nothing).
+ * Internal single quotes are escaped by ending the quote, adding an escaped
+ * single quote, and reopening.
+ *
+ * @param value - The string to escape
+ * @returns A single-quoted, shell-safe string
+ */
+export function shellEscape(value: string): string {
+  return "'" + value.replace(/'/g, "'\\''") + "'"
+}
+
+/**
  * Sleeps for a given number of milliseconds.
  *
  * @param ms - Duration in milliseconds

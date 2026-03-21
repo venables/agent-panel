@@ -4,7 +4,6 @@
 
 import type { AgentConfig, Config } from "./config.ts"
 import { resolveAgentCommand, resolveCommandPrompt } from "./config.ts"
-import { sleep } from "./exec.ts"
 import type { PaneHandle, Terminal } from "./terminal/terminal.ts"
 
 /** Result of launching a single agent. */
@@ -34,9 +33,39 @@ async function launchInPane(
 }
 
 /**
- * Launches all agents for a given command.
+ * Launches all configured agents with a resolved prompt.
  *
  * The first agent reuses the current pane. Subsequent agents get new splits.
+ *
+ * @param terminal - The terminal backend to use
+ * @param agents - The agents to launch
+ * @param prompt - The resolved prompt string
+ * @returns Array of launch results for each agent
+ */
+export async function launchAgents(
+  terminal: Terminal,
+  agents: readonly AgentConfig[],
+  prompt: string
+): Promise<readonly LaunchResult[]> {
+  const results: LaunchResult[] = []
+
+  for (let i = 0; i < agents.length; i++) {
+    const agent = agents[i]!
+    const shellCommand = resolveAgentCommand(agent, prompt)
+
+    // eslint-disable-next-line no-await-in-loop
+    const pane = i === 0 ? terminal.currentPane() : await terminal.createSplit()
+
+    // eslint-disable-next-line no-await-in-loop
+    const result = await launchInPane(terminal, agent, shellCommand, pane)
+    results.push(result)
+  }
+
+  return results
+}
+
+/**
+ * Launches all agents for a configured command.
  *
  * @param terminal - The terminal backend to use
  * @param config - The full config
@@ -44,7 +73,7 @@ async function launchInPane(
  * @param arg - Optional argument for the command
  * @returns Array of launch results for each agent
  */
-export async function launchAllAgents(
+export async function launchCommand(
   terminal: Terminal,
   config: Config,
   commandName: string,
@@ -60,24 +89,5 @@ export async function launchAllAgents(
   }
 
   const prompt = resolveCommandPrompt(command, arg)
-
-  const results: readonly LaunchResult[] = await config.agents.reduce<
-    Promise<readonly LaunchResult[]>
-  >(async (prev, agent, i) => {
-    const acc = await prev
-    const shellCommand = resolveAgentCommand(agent, prompt)
-
-    const pane =
-      i === 0
-        ? terminal.currentPane()
-        : await terminal.createSplit().then(async (p) => {
-            await sleep(500)
-            return p
-          })
-
-    const result = await launchInPane(terminal, agent, shellCommand, pane)
-    return [...acc, result]
-  }, Promise.resolve([]))
-
-  return results
+  return launchAgents(terminal, config.agents, prompt)
 }

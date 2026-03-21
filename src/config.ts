@@ -10,6 +10,8 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
+import { shellEscape } from "./exec.ts"
+
 const APP_NAME = "panel"
 
 /** Schema for a single agent. */
@@ -101,11 +103,21 @@ export function stripJsonc(input: string): string {
       continue
     }
 
+    if (!inString && (ch === "}" || ch === "]")) {
+      let j = result.length - 1
+      while (j >= 0 && /\s/.test(result[j]!)) {
+        j--
+      }
+      if (j >= 0 && result[j] === ",") {
+        result = result.slice(0, j) + result.slice(j + 1)
+      }
+    }
+
     result += ch
     i++
   }
 
-  return result.replace(/,(\s*[}\]])/g, "$1")
+  return result
 }
 
 /**
@@ -146,17 +158,20 @@ export function resolveCommandPrompt(
     if (command.requiresArg) {
       throw new Error("This command requires an argument.")
     }
-    if (command.promptNoArg) {
+    if (command.promptNoArg !== undefined) {
       return command.promptNoArg
     }
-    return command.prompt.replace(" {{arg}}", "").replace("{{arg}}", "")
+    return command.prompt.replaceAll(" {{arg}}", "").replaceAll("{{arg}}", "")
   }
 
-  return command.prompt.replace("{{arg}}", arg)
+  return command.prompt.replaceAll("{{arg}}", arg)
 }
 
 /**
  * Resolves the full shell command for an agent given a prompt.
+ *
+ * The prompt is shell-escaped (single-quoted) before substitution to prevent
+ * shell expansion of $(), backticks, and other metacharacters.
  *
  * @param agent - The agent config
  * @param prompt - The resolved prompt string
@@ -166,16 +181,16 @@ export function resolveAgentCommand(
   agent: AgentConfig,
   prompt: string
 ): string {
-  return agent.command.replace("{{prompt}}", prompt)
+  return agent.command.replaceAll("{{prompt}}", shellEscape(prompt))
 }
 
 /** Default config written by `panel init`. */
 export const DEFAULT_CONFIG_CONTENT = `{
   // Agent definitions -- each needs a {{prompt}} placeholder in command
   "agents": [
-    { "name": "claude", "command": "claude \\"{{prompt}}\\"" },
-    { "name": "codex", "command": "codex \\"{{prompt}}\\"" },
-    { "name": "opencode", "command": "opencode --prompt \\"{{prompt}}\\"" }
+    { "name": "claude", "command": "claude {{prompt}}" },
+    { "name": "codex", "command": "codex {{prompt}}" },
+    { "name": "opencode", "command": "opencode --prompt {{prompt}}" }
   ],
 
   // Commands -- use {{arg}} for the optional argument

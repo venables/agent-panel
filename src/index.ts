@@ -2,63 +2,78 @@
  * CLI entry point for panel.
  *
  * Usage:
- *   panel init                  Create default config
- *   panel <command> [arg]       Run a command from config
+ *   panel <prompt...>              Launch agents with a raw prompt
+ *   panel run <command> [arg]      Run a configured command
+ *   panel init                     Create default config
+ *   panel list                     List configured commands
  *
  * Examples:
- *   panel review 123            Review PR #123
- *   panel review                Review current branch vs main
- *   panel fix ISSUE-456         Fix an issue
- *   panel explain "the auth flow"
+ *   panel what are some ways to improve this
+ *   panel run review 123
+ *   panel run explain "the auth flow"
  */
 
 import { loadConfig } from "./config.ts"
 import { init } from "./init.ts"
-import { launchAllAgents } from "./launch.ts"
+import { launchAgents, launchCommand } from "./launch.ts"
+import type { LaunchResult } from "./launch.ts"
 import { list, printUsage } from "./list.ts"
 import { detectTerminal } from "./terminal/index.ts"
+
+function printResults(results: readonly LaunchResult[]): void {
+  for (const result of results) {
+    console.log(`  ${result.agent.name} -> ${result.pane.id}`)
+  }
+  console.log("All agents launched.")
+}
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2)
 
-  if (args.length === 0) {
+  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
     await printUsage()
-    process.exit(1)
+    process.exit(args.length === 0 ? 1 : 0)
   }
 
-  const commandName = args[0]!
+  const subcommand = args[0]!
 
-  if (commandName === "init") {
+  if (subcommand === "init") {
     await init()
     return
   }
 
-  if (commandName === "list") {
+  if (subcommand === "list") {
     await list()
     return
   }
 
   const config = await loadConfig()
   const { kind, terminal } = detectTerminal()
-  const arg = args[1]
 
-  if (args.length > 2) {
-    console.error("Usage: panel <command> [arg]")
-    process.exit(1)
+  if (subcommand === "run") {
+    const commandName = args[1]
+
+    if (!commandName || args.length > 3) {
+      console.error("Usage: panel run <command> [arg]")
+      process.exit(1)
+    }
+
+    const arg = args[2]
+    const description = arg ? `${commandName} ${arg}` : commandName
+    console.log(
+      `[${kind}] Launching ${config.agents.length} agents: ${description}`
+    )
+
+    const results = await launchCommand(terminal, config, commandName, arg)
+    printResults(results)
+    return
   }
 
-  const description = arg ? `${commandName} ${arg}` : commandName
-  console.log(
-    `[${kind}] Launching ${config.agents.length} agents: ${description}`
-  )
+  const prompt = args.join(" ")
+  console.log(`[${kind}] Launching ${config.agents.length} agents: ${prompt}`)
 
-  const results = await launchAllAgents(terminal, config, commandName, arg)
-
-  for (const result of results) {
-    console.log(`  ${result.agent.name} -> ${result.pane.id}`)
-  }
-
-  console.log("All agents launched.")
+  const results = await launchAgents(terminal, config.agents, prompt)
+  printResults(results)
 }
 
 main().catch((error: unknown) => {
