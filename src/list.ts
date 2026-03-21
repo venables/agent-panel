@@ -29,7 +29,7 @@ function formatCommand(
 function printConfigSummary(config: Config): void {
   process.stdout.write(`Commands (from ${configPath()}):\n`)
   for (const [name, command] of Object.entries(config.commands)) {
-    process.stdout.write(`  panel run ${formatCommand(name, command)}\n`)
+    process.stdout.write(`  panel ${formatCommand(name, command)}\n`)
   }
   process.stdout.write("\n")
   process.stdout.write(
@@ -42,8 +42,8 @@ function printConfigSummary(config: Config): void {
  * Prints full usage help, including available commands if config exists.
  */
 export async function printUsage(): Promise<void> {
-  process.stdout.write("Usage: panel <prompt...>\n")
-  process.stdout.write("       panel run <command> [arg]\n")
+  process.stdout.write("Usage: panel <command> [arg]\n")
+  process.stdout.write("       panel <prompt...>\n")
   process.stdout.write("       panel init\n")
   process.stdout.write("       panel list\n")
   process.stdout.write("       panel config\n")

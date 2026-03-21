@@ -2,16 +2,16 @@
  * CLI entry point for panel.
  *
  * Usage:
+ *   panel <command> [arg]          Run a configured command
  *   panel <prompt...>              Launch agents with a raw prompt
- *   panel run <command> [arg]      Run a configured command
  *   panel init                     Create default config
  *   panel list                     List configured commands
  *   panel config                   Open config in $EDITOR
  *
  * Examples:
+ *   panel review 123
+ *   panel explain "the auth flow"
  *   panel what are some ways to improve this
- *   panel run review 123
- *   panel run explain "the auth flow"
  */
 
 import { loadConfig } from "./config.ts"
@@ -57,6 +57,7 @@ async function main(): Promise<void> {
   const config = await loadConfig()
   const { kind, terminal } = detectTerminal()
 
+  // "panel run <command> [arg]" -- explicit form
   if (subcommand === "run") {
     const commandName = args[1]
 
@@ -76,6 +77,20 @@ async function main(): Promise<void> {
     return
   }
 
+  // "panel <command> [arg]" -- shorthand when first arg matches a command name
+  if (config.commands[subcommand] && args.length <= 2) {
+    const arg = args[1]
+    const description = arg ? `${subcommand} ${arg}` : subcommand
+    process.stdout.write(
+      `[${kind}] Launching ${config.agents.length} agents: ${description}\n`
+    )
+
+    const results = await launchCommand(terminal, config, subcommand, arg)
+    printResults(results)
+    return
+  }
+
+  // Otherwise treat everything as a raw prompt
   const prompt = args.join(" ")
   process.stdout.write(
     `[${kind}] Launching ${config.agents.length} agents: ${prompt}\n`

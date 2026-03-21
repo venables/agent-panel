@@ -129,12 +129,14 @@ with `{{prompt}}` as the placeholder:
 ## CLI reference
 
 ```
+panel <command> [arg]          Run a configured command
 panel <prompt...>              Launch agents with a raw prompt
-panel run <command> [arg]      Run a configured command
 panel init                     Create default config
 panel list                     List configured commands and agents
 panel config                   Open config in $EDITOR
 ```
+
+`panel run <command> [arg]` also works as an explicit form.
 
 ## Development
 
