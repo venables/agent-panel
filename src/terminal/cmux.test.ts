@@ -2,27 +2,27 @@ import { expect, test } from "vitest"
 
 import { createCmuxTerminal } from "./cmux.ts"
 
-test("createCmuxTerminal", async () => {
+test("cmux terminal has correct name and current pane", () => {
   const terminal = createCmuxTerminal("test-surface")
   expect(terminal.name).toBe("cmux")
   expect(terminal.currentPane().id).toBe("test-surface")
+})
 
-  // Try calling createSplit, assuming cmux isn't available in this CI it will throw
-  try {
-    await terminal.createSplit()
-  } catch (e: any) {
-    expect(e.message).toMatch(/cmux|ENOENT/)
-  }
+test("cmux createSplit fails without cmux binary", async () => {
+  const terminal = createCmuxTerminal("test-surface")
+  await expect(terminal.createSplit()).rejects.toThrow(/cmux|ENOENT/)
+})
 
-  try {
-    await terminal.sendText({ id: "1" }, "hello")
-  } catch (e: any) {
-    expect(e.message).toMatch(/cmux|ENOENT/)
-  }
+test("cmux sendText fails without cmux binary", async () => {
+  const terminal = createCmuxTerminal("test-surface")
+  await expect(terminal.sendText({ id: "1" }, "hello")).rejects.toThrow(
+    /cmux|ENOENT/
+  )
+})
 
-  try {
-    await terminal.sendKey({ id: "1" }, "enter")
-  } catch (e: any) {
-    expect(e.message).toMatch(/cmux|ENOENT/)
-  }
+test("cmux sendKey fails without cmux binary", async () => {
+  const terminal = createCmuxTerminal("test-surface")
+  await expect(terminal.sendKey({ id: "1" }, "enter")).rejects.toThrow(
+    /cmux|ENOENT/
+  )
 })

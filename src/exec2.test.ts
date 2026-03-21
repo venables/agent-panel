@@ -8,7 +8,7 @@ test("run executes a command and returns stdout", async () => {
 })
 
 test("run throws on error", async () => {
-  expect(run("false", [])).rejects.toThrow(/failed/)
+  await expect(run("false", [])).rejects.toThrow(/failed/)
 })
 
 test("sleep waits for a duration", async () => {

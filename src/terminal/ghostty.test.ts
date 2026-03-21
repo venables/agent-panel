@@ -1,27 +1,35 @@
-import { expect, test } from "vitest"
+import { describe, expect, test } from "vitest"
 
 import { createGhosttyTerminal } from "./ghostty.ts"
 
-test("ghostty terminal basic", async () => {
+test("ghostty terminal has correct name and current pane", () => {
   const terminal = createGhosttyTerminal()
   expect(terminal.name).toBe("ghostty")
   expect(terminal.currentPane().id).toBe("__CURRENT__")
-
-  try {
-    await terminal.createSplit()
-  } catch (e: any) {
-    expect(e.message).toMatch(/osascript|failed|Ghostty/)
-  }
-
-  try {
-    await terminal.sendText({ id: "1" }, "hello")
-  } catch (e: any) {
-    expect(e.message).toMatch(/osascript|failed|Ghostty/)
-  }
-
-  try {
-    await terminal.sendKey({ id: "1" }, "enter")
-  } catch (e: any) {
-    expect(e.message).toMatch(/osascript|failed|Ghostty/)
-  }
 })
+
+describe.skipIf(process.platform === "darwin")(
+  "ghostty without osascript",
+  () => {
+    test("createSplit fails", async () => {
+      const terminal = createGhosttyTerminal()
+      await expect(terminal.createSplit()).rejects.toThrow(
+        /osascript|failed|Ghostty/
+      )
+    })
+
+    test("sendText fails", async () => {
+      const terminal = createGhosttyTerminal()
+      await expect(terminal.sendText({ id: "1" }, "hello")).rejects.toThrow(
+        /osascript|failed|Ghostty/
+      )
+    })
+
+    test("sendKey fails", async () => {
+      const terminal = createGhosttyTerminal()
+      await expect(terminal.sendKey({ id: "1" }, "enter")).rejects.toThrow(
+        /osascript|failed|Ghostty/
+      )
+    })
+  }
+)

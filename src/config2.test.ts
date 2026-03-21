@@ -25,7 +25,7 @@ test("loadConfig throws nice error when file missing", async () => {
   const oldEnv = process.env["XDG_CONFIG_HOME"]
   process.env["XDG_CONFIG_HOME"] = "/tmp/does-not-exist-" + Math.random()
 
-  expect(loadConfig()).rejects.toThrow(/Config file not found/)
+  await expect(loadConfig()).rejects.toThrow(/Config file not found/)
 
   process.env["XDG_CONFIG_HOME"] = oldEnv
 })

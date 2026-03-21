@@ -133,7 +133,7 @@ describe("launchCommand", () => {
   test("throws on unknown command", async () => {
     const terminal = createFakeTerminal()
 
-    expect(
+    await expect(
       launchCommand(terminal, config, "deploy", undefined)
     ).rejects.toThrow('Unknown command: "deploy"')
   })
@@ -141,8 +141,8 @@ describe("launchCommand", () => {
   test("throws when required arg is missing", async () => {
     const terminal = createFakeTerminal()
 
-    expect(launchCommand(terminal, config, "fix", undefined)).rejects.toThrow(
-      "This command requires an argument."
-    )
+    await expect(
+      launchCommand(terminal, config, "fix", undefined)
+    ).rejects.toThrow("This command requires an argument.")
   })
 })
