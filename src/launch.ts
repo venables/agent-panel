@@ -29,6 +29,7 @@ async function launchInPane(
 ): Promise<LaunchResult> {
   await terminal.sendText(pane, shellCommand)
   await terminal.sendKey(pane, "Enter")
+
   return { agent, pane }
 }
 

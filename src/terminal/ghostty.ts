@@ -3,9 +3,9 @@
  *
  * Requires Ghostty 1.3.0+ on macOS with AppleScript enabled.
  *
- * Panes are tracked by terminal index within the selected tab of the
- * front window (e.g. "terminal 1", "terminal 2"). Each `createSplit`
- * increments the index.
+ * Panes are tracked by Ghostty's stable terminal IDs. New splits are
+ * created from the previously created pane, and AppleScript interactions
+ * target terminals by ID rather than guessed indices.
  */
 
 import { run } from "../exec.ts"
@@ -14,6 +14,7 @@ import type { PaneHandle, Terminal } from "./terminal.ts"
 
 /** Delay after creating a split to let Ghostty render the new pane. */
 const SPLIT_SETTLE_MS = 500
+const CURRENT_PANE_ID = "__CURRENT__"
 
 /**
  * Runs an AppleScript snippet via osascript.
@@ -33,76 +34,138 @@ async function runAppleScript(
 }
 
 /**
- * Builds the AppleScript reference for a terminal pane by index.
+ * Resolves a pane handle to a stable Ghostty terminal ID.
  *
- * @param pane - The pane handle containing the terminal index
- * @returns AppleScript object reference string
+ * The current pane is represented by a sentinel and resolved dynamically
+ * to the focused terminal in the selected tab of the front window.
+ *
+ * @param pane - The pane handle to resolve
+ * @returns The stable terminal ID string
  */
-function terminalRef(pane: PaneHandle): string {
-  return `terminal ${pane.id} of selected tab of front window`
+function terminalId(pane: PaneHandle): string {
+  return pane.id
+}
+
+/**
+ * Finds a target terminal and returns its stable ID.
+ *
+ * @param paneId - Pane ID or the current-pane sentinel
+ * @returns AppleScript lines that resolve and return the target terminal ID
+ */
+function resolveTerminalScript(paneId: string): readonly string[] {
+  if (paneId === CURRENT_PANE_ID) {
+    return [
+      "    set targetTerminal to focused terminal of selected tab of front window",
+      "    return id of targetTerminal"
+    ]
+  }
+
+  return [
+    "    set targetTerminal to missing value",
+    "    repeat with candidate in terminals of front window",
+    `      if id of candidate is ${JSON.stringify(paneId)} then`,
+    "        set targetTerminal to candidate",
+    "        exit repeat",
+    "      end if",
+    "    end repeat",
+    '    if targetTerminal is missing value then error "Ghostty terminal not found"',
+    "    return id of targetTerminal"
+  ]
+}
+
+/**
+ * Finds a target terminal without returning its ID.
+ *
+ * @param paneId - Pane ID or the current-pane sentinel
+ * @returns AppleScript lines that set `targetTerminal`
+ */
+function findTerminalScript(paneId: string): readonly string[] {
+  return resolveTerminalScript(paneId).filter(
+    (line) => line !== "    return id of targetTerminal"
+  )
+}
+
+/**
+ * Resolves a pane to a stable Ghostty terminal ID.
+ *
+ * @param pane - The pane handle to resolve
+ * @returns The terminal ID
+ */
+async function resolveTerminalId(pane: PaneHandle): Promise<string> {
+  return runAppleScript([
+    'tell application "Ghostty"',
+    ...resolveTerminalScript(terminalId(pane)),
+    "end tell"
+  ])
 }
 
 /**
  * Sends text to a Ghostty pane via AppleScript's `on run argv` handler.
  *
- * @param ref - The AppleScript terminal reference
+ * Uses parameterized argv to prevent AppleScript injection.
+ *
+ * @param pane - The destination pane
  * @param text - The text to send
  */
-async function inputText(ref: string, text: string): Promise<void> {
+async function inputText(pane: PaneHandle, text: string): Promise<void> {
+  const id = await resolveTerminalId(pane)
+
   await runAppleScript(
     [
       "on run argv",
       '  tell application "Ghostty"',
-      `    input text (item 1 of argv) to ${ref}`,
+      "    set targetTerminal to first terminal whose id is item 2 of argv",
+      "    input text (item 1 of argv) to targetTerminal",
       "  end tell",
       "end run"
     ],
-    [text]
+    [text, id]
   )
 }
 
 export function createGhosttyTerminal(): Terminal {
-  let terminalCount = 1
+  let activePaneId = CURRENT_PANE_ID
 
   return {
     name: "ghostty",
 
     currentPane(): PaneHandle {
-      return { id: "1" }
+      return { id: CURRENT_PANE_ID }
     },
 
     async createSplit(): Promise<PaneHandle> {
-      const currentRef = terminalRef({ id: String(terminalCount) })
-
-      await runAppleScript([
+      const newPaneId = await runAppleScript([
         'tell application "Ghostty"',
-        `  split (${currentRef}) direction right`,
+        ...findTerminalScript(activePaneId),
+        "  set newTerminal to split targetTerminal direction right",
+        "  return id of newTerminal",
         "end tell"
       ])
 
       await sleep(SPLIT_SETTLE_MS)
 
-      terminalCount++
-      return { id: String(terminalCount) }
+      activePaneId = newPaneId
+      return { id: newPaneId }
     },
 
     async sendText(pane: PaneHandle, text: string): Promise<void> {
-      await inputText(terminalRef(pane), text)
+      await inputText(pane, text)
     },
 
     async sendKey(pane: PaneHandle, key: string): Promise<void> {
-      const keyMap: Record<string, string> = {
-        enter: "\r",
-        tab: "\t",
-        escape: "\u001b"
-      }
-      const char = keyMap[key.toLowerCase()]
+      const id = await resolveTerminalId(pane)
 
-      if (!char) {
-        throw new Error(`Unsupported key for Ghostty: "${key}"`)
-      }
-
-      await inputText(terminalRef(pane), char)
+      await runAppleScript(
+        [
+          "on run argv",
+          '  tell application "Ghostty"',
+          "    set targetTerminal to first terminal whose id is item 2 of argv",
+          '    send key (item 1 of argv) to targetTerminal',
+          "  end tell",
+          "end run"
+        ],
+        [key.toLowerCase(), id]
+      )
     }
   }
 }
