@@ -27,31 +27,33 @@ function formatCommand(
  * @param config - The loaded config
  */
 function printConfigSummary(config: Config): void {
-  console.log(`Commands (from ${configPath()}):`)
+  process.stdout.write(`Commands (from ${configPath()}):\n`)
   for (const [name, command] of Object.entries(config.commands)) {
-    console.log(`  panel run ${formatCommand(name, command)}`)
+    process.stdout.write(`  panel run ${formatCommand(name, command)}\n`)
   }
-  console.log("")
-  console.log(`Agents: ${config.agents.map((a) => a.name).join(", ")}`)
-  console.log(`Config: ${configPath()}`)
+  process.stdout.write("\n")
+  process.stdout.write(
+    `Agents: ${config.agents.map((a) => a.name).join(", ")}\n`
+  )
+  process.stdout.write(`Config: ${configPath()}\n`)
 }
 
 /**
  * Prints full usage help, including available commands if config exists.
  */
 export async function printUsage(): Promise<void> {
-  console.log("Usage: panel <prompt...>")
-  console.log("       panel run <command> [arg]")
-  console.log("       panel init")
-  console.log("       panel list")
-  console.log("       panel config")
-  console.log("")
+  process.stdout.write("Usage: panel <prompt...>\n")
+  process.stdout.write("       panel run <command> [arg]\n")
+  process.stdout.write("       panel init\n")
+  process.stdout.write("       panel list\n")
+  process.stdout.write("       panel config\n")
+  process.stdout.write("\n")
 
   try {
     const config = await loadConfig()
     printConfigSummary(config)
   } catch {
-    console.log(`No config found. Run 'panel init' to get started.`)
+    process.stdout.write(`No config found. Run 'panel init' to get started.\n`)
   }
 }
 

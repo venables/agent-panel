@@ -140,19 +140,19 @@ panel config                   Open config in $EDITOR
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 
 # Run locally
-bun run cli review 123
+pnpm run cli review 123
 
 # Build for production
-bun run build
+pnpm run build
 
 # Run all checks (format, lint, typecheck, test)
-bun check
+pnpm check
 
 # Auto-fix format and lint issues
-bun fix
+pnpm fix
 ```
 
 ### Project structure

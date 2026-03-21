@@ -22,8 +22,8 @@ export async function editConfig(): Promise<void> {
   const path = configPath()
 
   if (!existsSync(path)) {
-    console.error(`Config file not found: ${path}`)
-    console.error('Run "panel init" to create one.')
+    process.stderr.write(`Config file not found: ${path}\n`)
+    process.stderr.write('Run "panel init" to create one.\n')
     process.exit(1)
   }
 

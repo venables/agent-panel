@@ -24,9 +24,9 @@ import { detectTerminal } from "./terminal/index.ts"
 
 function printResults(results: readonly LaunchResult[]): void {
   for (const result of results) {
-    console.log(`  ${result.agent.name} -> ${result.pane.id}`)
+    process.stdout.write(`  ${result.agent.name} -> ${result.pane.id}\n`)
   }
-  console.log("All agents launched.")
+  process.stdout.write("All agents launched.\n")
 }
 
 async function main(): Promise<void> {
@@ -61,14 +61,14 @@ async function main(): Promise<void> {
     const commandName = args[1]
 
     if (!commandName || args.length > 3) {
-      console.error("Usage: panel run <command> [arg]")
+      process.stderr.write("Usage: panel run <command> [arg]\n")
       process.exit(1)
     }
 
     const arg = args[2]
     const description = arg ? `${commandName} ${arg}` : commandName
-    console.log(
-      `[${kind}] Launching ${config.agents.length} agents: ${description}`
+    process.stdout.write(
+      `[${kind}] Launching ${config.agents.length} agents: ${description}\n`
     )
 
     const results = await launchCommand(terminal, config, commandName, arg)
@@ -77,7 +77,9 @@ async function main(): Promise<void> {
   }
 
   const prompt = args.join(" ")
-  console.log(`[${kind}] Launching ${config.agents.length} agents: ${prompt}`)
+  process.stdout.write(
+    `[${kind}] Launching ${config.agents.length} agents: ${prompt}\n`
+  )
 
   const results = await launchAgents(terminal, config.agents, prompt)
   printResults(results)
@@ -85,6 +87,6 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error)
-  console.error(message)
+  process.stderr.write(message + "\n")
   process.exit(1)
 })

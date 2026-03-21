@@ -20,13 +20,13 @@ export async function init(): Promise<void> {
     .catch(() => false)
 
   if (exists) {
-    console.error(`Config already exists: ${path}`)
-    console.error("Delete it first if you want to regenerate.")
+    process.stderr.write(`Config already exists: ${path}\n`)
+    process.stderr.write("Delete it first if you want to regenerate.\n")
     process.exit(1)
   }
 
   await mkdir(dirname(path), { recursive: true })
   await writeFile(path, DEFAULT_CONFIG_CONTENT, "utf-8")
 
-  console.log(`Created config: ${path}`)
+  process.stdout.write(`Created config: ${path}\n`)
 }
