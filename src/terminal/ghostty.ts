@@ -8,8 +8,8 @@
  * target terminals by ID rather than guessed indices.
  */
 
-import { run } from "../exec.ts"
-import { sleep } from "../exec.ts"
+import { run } from "../utils/exec.ts"
+import { sleep } from "../utils/exec.ts"
 import type { PaneHandle, Terminal } from "./terminal.ts"
 
 /** Delay after creating a split to let Ghostty render the new pane. */
