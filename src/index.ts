@@ -2,24 +2,23 @@
  * CLI entry point for panel.
  *
  * Usage:
- *   panel <command> [arg]          Run a configured command
+ *   panel run <command> [arg]      Run a configured command
  *   panel <prompt...>              Launch agents with a raw prompt
- *   panel init                     Create default config
- *   panel list                     List configured commands
- *   panel config                   Open config in $EDITOR
+ *   panel config:create            Create default config
+ *   panel config:edit              Open config in $EDITOR
  *
  * Examples:
- *   panel review 123
- *   panel explain "the auth flow"
+ *   panel run review 123
+ *   panel run explain "the auth flow"
  *   panel what are some ways to improve this
  */
 
-import { loadConfig } from "./config.ts"
-import { editConfig } from "./edit-config.ts"
-import { init } from "./init.ts"
-import { launchAgents, launchCommand } from "./launch.ts"
-import type { LaunchResult } from "./launch.ts"
-import { list, printUsage } from "./list.ts"
+import { printUsage } from "./commands/command-list.ts"
+import { init } from "./commands/config-create.ts"
+import { editConfig } from "./commands/config-edit.ts"
+import { launchAgents, launchCommand } from "./commands/launch.ts"
+import type { LaunchResult } from "./commands/launch.ts"
+import { loadConfig } from "./config/config.ts"
 import { detectTerminal } from "./terminal/index.ts"
 
 function printResults(results: readonly LaunchResult[]): void {
@@ -39,17 +38,12 @@ async function main(): Promise<void> {
 
   const subcommand = args[0]!
 
-  if (subcommand === "init") {
+  if (subcommand === "config:create") {
     await init()
     return
   }
 
-  if (subcommand === "list") {
-    await list()
-    return
-  }
-
-  if (subcommand === "config") {
+  if (subcommand === "config:edit") {
     await editConfig()
     return
   }
@@ -57,7 +51,7 @@ async function main(): Promise<void> {
   const config = await loadConfig()
   const { kind, terminal } = detectTerminal()
 
-  // "panel run <command> [arg]" -- explicit form
+  // "panel run <command> [arg]" -- only way to invoke configured commands
   if (subcommand === "run") {
     const commandName = args[1]
 
@@ -77,20 +71,7 @@ async function main(): Promise<void> {
     return
   }
 
-  // "panel <command> [arg]" -- shorthand when first arg matches a command name
-  if (config.commands[subcommand] && args.length <= 2) {
-    const arg = args[1]
-    const description = arg ? `${subcommand} ${arg}` : subcommand
-    process.stdout.write(
-      `[${kind}] Launching ${config.agents.length} agents: ${description}\n`
-    )
-
-    const results = await launchCommand(terminal, config, subcommand, arg)
-    printResults(results)
-    return
-  }
-
-  // Otherwise treat everything as a raw prompt
+  // Everything else is a raw prompt
   const prompt = args.join(" ")
   process.stdout.write(
     `[${kind}] Launching ${config.agents.length} agents: ${prompt}\n`

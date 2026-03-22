@@ -1,5 +1,5 @@
 /**
- * Handles the `panel init` command.
+ * Handles the `panel config:create` command.
  *
  * Creates the default config file at ~/.config/agent-panel/config.jsonc.
  */
@@ -7,7 +7,8 @@
 import { access, mkdir, writeFile } from "node:fs/promises"
 import { dirname } from "node:path"
 
-import { configPath, DEFAULT_CONFIG_CONTENT } from "./config.ts"
+import { configPath } from "../config/config.ts"
+import { DEFAULT_CONFIG_CONTENT } from "../config/default-config.ts"
 
 /**
  * Writes the default config file. Errors if it already exists.

@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 
-import { configPath } from "./config.ts"
+import { configPath } from "../config/config.ts"
 
 /** Resolved editor command and any flags (e.g. "code -w" -> ["code", "-w"]). */
 interface EditorCommand {
@@ -40,7 +40,7 @@ export async function editConfig(): Promise<void> {
 
   if (!existsSync(path)) {
     process.stderr.write(`Config file not found: ${path}\n`)
-    process.stderr.write('Run "panel init" to create one.\n')
+    process.stderr.write('Run "panel config:create" to create one.\n')
     process.exit(1)
   }
 
