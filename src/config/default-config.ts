@@ -27,7 +27,9 @@ export const DEFAULT_CONFIG_CONTENT = `{
 
   // Options
   "options": {
-    // Set to true to give every agent a new split (leaves your current pane alone)
+    // Layout: "splits" for side-by-side panes, "tabs" for separate tabs
+    "layout": "splits",
+    // Set to true to give every agent a new pane (leaves your current pane alone)
     "preserveActivePane": false
   }
 }

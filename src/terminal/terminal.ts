@@ -1,5 +1,5 @@
 /**
- * Abstract terminal interface for split-based agent orchestration.
+ * Abstract terminal interface for agent orchestration.
  *
  * Each backend (cmux, Ghostty, etc.) implements this interface.
  */
@@ -19,6 +19,9 @@ export interface Terminal {
 
   /** Creates a new right-side split and returns a handle to it. */
   createSplit(): Promise<PaneHandle>
+
+  /** Creates a new tab and returns a handle to it. */
+  createTab(): Promise<PaneHandle>
 
   /** Sends text to a pane (does not press Enter). */
   sendText(pane: PaneHandle, text: string): Promise<void>

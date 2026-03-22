@@ -14,6 +14,7 @@ function createFakeTerminal(): Terminal & {
 } {
   const calls: Array<{ method: string; args: readonly unknown[] }> = []
   let splitCount = 0
+  let tabCount = 0
 
   return {
     name: "fake",
@@ -27,6 +28,13 @@ function createFakeTerminal(): Terminal & {
       splitCount++
       const pane = { id: `split-${splitCount}` }
       calls.push({ method: "createSplit", args: [] })
+      return pane
+    },
+
+    async createTab(): Promise<PaneHandle> {
+      tabCount++
+      const pane = { id: `tab-${tabCount}` }
+      calls.push({ method: "createTab", args: [] })
       return pane
     },
 
@@ -93,6 +101,7 @@ describe("launchAgents", () => {
     const terminal = createFakeTerminal()
 
     const results = await launchAgents(terminal, TWO_AGENTS, "hello", {
+      layout: "splits",
       preserveActivePane: true
     })
 
@@ -102,6 +111,38 @@ describe("launchAgents", () => {
 
     const splitCalls = terminal.calls.filter((c) => c.method === "createSplit")
     expect(splitCalls).toHaveLength(2)
+  })
+
+  test("uses tabs layout when configured", async () => {
+    const terminal = createFakeTerminal()
+
+    const results = await launchAgents(terminal, TWO_AGENTS, "hello", {
+      layout: "tabs",
+      preserveActivePane: false
+    })
+
+    expect(results).toHaveLength(2)
+    expect(results[0]!.pane.id).toBe("current")
+    expect(results[1]!.pane.id).toBe("tab-1")
+
+    const tabCalls = terminal.calls.filter((c) => c.method === "createTab")
+    expect(tabCalls).toHaveLength(1)
+  })
+
+  test("tabs layout with preserveActivePane creates tabs for all agents", async () => {
+    const terminal = createFakeTerminal()
+
+    const results = await launchAgents(terminal, TWO_AGENTS, "hello", {
+      layout: "tabs",
+      preserveActivePane: true
+    })
+
+    expect(results).toHaveLength(2)
+    expect(results[0]!.pane.id).toBe("tab-1")
+    expect(results[1]!.pane.id).toBe("tab-2")
+
+    const tabCalls = terminal.calls.filter((c) => c.method === "createTab")
+    expect(tabCalls).toHaveLength(2)
   })
 })
 
@@ -119,7 +160,7 @@ describe("launchCommand", () => {
         requiresArg: true
       }
     },
-    options: { preserveActivePane: false }
+    options: { layout: "splits", preserveActivePane: false }
   }
 
   test("resolves command prompt and launches agents", async () => {

@@ -126,13 +126,15 @@ Add an `options` object to configure panel behavior:
 
 ```jsonc
 "options": {
+  "layout": "tabs",
   "preserveActivePane": true
 }
 ```
 
-| Field                | Type       | Description                                                                                    |
-| -------------------- | ---------- | ---------------------------------------------------------------------------------------------- |
-| `preserveActivePane` | `boolean?` | If `true`, all agents get new splits and your current pane is left alone. Defaults to `false`. |
+| Field                | Type                   | Description                                                                                   |
+| -------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| `layout`             | `"splits"` \| `"tabs"` | How to arrange agents: side-by-side splits or separate tabs. Defaults to `"splits"`.          |
+| `preserveActivePane` | `boolean?`             | If `true`, all agents get new panes and your current pane is left alone. Defaults to `false`. |
 
 ### Adding an agent
 

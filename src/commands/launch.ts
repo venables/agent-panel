@@ -1,5 +1,5 @@
 /**
- * Orchestrates launching agents in terminal splits.
+ * Orchestrates launching agents in terminal splits or tabs.
  */
 
 import type { AgentConfig, Config } from "../config/config.ts"
@@ -35,17 +35,36 @@ async function launchInPane(
 
 /** Options that control launch behavior. */
 interface LaunchOptions {
-  /** If true, all agents get new splits and the current pane is left alone. */
+  /** How to arrange agent panes: side-by-side splits or tabs. */
+  readonly layout: "splits" | "tabs"
+  /** If true, all agents get new panes and the current pane is left alone. */
   readonly preserveActivePane: boolean
 }
 
-const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = { preserveActivePane: false }
+const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = {
+  layout: "splits",
+  preserveActivePane: false
+}
+
+/**
+ * Creates a new pane using the configured layout strategy.
+ *
+ * @param terminal - The terminal backend
+ * @param layout - Whether to use splits or tabs
+ * @returns A handle to the new pane
+ */
+function createPane(
+  terminal: Terminal,
+  layout: "splits" | "tabs"
+): Promise<PaneHandle> {
+  return layout === "tabs" ? terminal.createTab() : terminal.createSplit()
+}
 
 /**
  * Launches all configured agents with a resolved prompt.
  *
  * When preserveActivePane is false (default), the first agent takes over
- * the current pane. When true, every agent gets a fresh split.
+ * the current pane. When true, every agent gets a fresh pane.
  *
  * @param terminal - The terminal backend to use
  * @param agents - The agents to launch
@@ -67,11 +86,11 @@ export async function launchAgents(
 
     const useCurrentPane = !options.preserveActivePane && i === 0
 
-    // Splits must be sequential -- each depends on the previous pane's position
+    // Pane creation must be sequential -- each depends on the previous pane's position
     // eslint-disable-next-line no-await-in-loop
     const pane = useCurrentPane
       ? terminal.currentPane()
-      : await terminal.createSplit()
+      : await createPane(terminal, options.layout)
 
     // eslint-disable-next-line no-await-in-loop
     const result = await launchInPane(terminal, agent, shellCommand, pane)

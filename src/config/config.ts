@@ -44,12 +44,17 @@ const CommandSchema = z
 
 /** Schema for behavioral options. */
 const OptionsSchema = z.object({
+  layout: z
+    .enum(["splits", "tabs"])
+    .optional()
+    .default("splits")
+    .describe("How to arrange agent panes: side-by-side splits or tabs."),
   preserveActivePane: z
     .boolean()
     .optional()
     .default(false)
     .describe(
-      "If true, all agents get new splits and the current pane is left alone."
+      "If true, all agents get new splits/tabs and the current pane is left alone."
     )
 })
 
@@ -58,7 +63,10 @@ const ConfigSchema = z.object({
   $schema: z.string().optional(),
   agents: z.array(AgentSchema).min(1),
   commands: z.record(z.string(), CommandSchema),
-  options: OptionsSchema.optional().default({ preserveActivePane: false })
+  options: OptionsSchema.optional().default({
+    layout: "splits",
+    preserveActivePane: false
+  })
 })
 
 export type AgentConfig = z.infer<typeof AgentSchema>

@@ -24,6 +24,11 @@ describe.skipIf(hasCmux())("cmux without binary", () => {
     await expect(terminal.createSplit()).rejects.toThrow(/cmux|ENOENT/)
   })
 
+  test("createTab fails", async () => {
+    const terminal = createCmuxTerminal("test-surface")
+    await expect(terminal.createTab()).rejects.toThrow(/cmux|ENOENT/)
+  })
+
   test("sendText fails", async () => {
     const terminal = createCmuxTerminal("test-surface")
     await expect(terminal.sendText({ id: "1" }, "hello")).rejects.toThrow(
