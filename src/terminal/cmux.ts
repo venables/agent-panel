@@ -35,7 +35,7 @@ export function createCmuxTerminal(surfaceId: string): Terminal {
     },
 
     async createTab(): Promise<PaneHandle> {
-      const output = await run("cmux", ["new-tab"])
+      const output = await run("cmux", ["new-surface"])
       return parseSurfaceRef(output)
     },
 
