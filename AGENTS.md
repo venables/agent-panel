@@ -3,23 +3,23 @@
 ## Commands
 
 ```bash
-pnpm install     # Install dependencies
-pnpm dev         # Run application
-pnpm run build   # Build for production
-pnpm test        # Run tests (vitest)
+bun install     # Install dependencies
+bun dev         # Run application
+bun run build   # Build for production
+bun test        # Run tests (bun:test)
 
-pnpm check       # Run all checks (format, lint, typecheck, test)
-pnpm fix         # Auto-fix format and lint issues
-pnpm typecheck   # TypeScript type checking
-pnpm lint        # Run oxlint with type-aware rules
-pnpm format      # Run oxfmt formatter
+bun check       # Run all checks (format, lint, typecheck, test)
+bun fix         # Auto-fix format and lint issues
+bun typecheck   # TypeScript type checking
+bun lint        # Run oxlint with type-aware rules
+bun format      # Run oxfmt formatter
 ```
 
 ## Coding Rules
 
-- Use `pnpm` as the packagemanager
+- Use `bun` as the package manager and test runner
 - ALWAYS use strict TypeScript
-- Use `vitest` for testing
+- Use `bun:test` for testing
 - ALWAYS document methods using TSDoc format with one newline after the
   description before the params
 - ALWAYS colocate tests with source

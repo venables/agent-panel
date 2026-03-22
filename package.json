@@ -31,35 +31,32 @@
   "type": "module",
   "scripts": {
     "build": "tsdown",
-    "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test",
     "clean": "git clean -xdf node_modules/.cache dist",
-    "cli": "tsx src/index.ts",
-    "dev": "tsx src/index.ts",
-    "fix": "pnpm run format && pnpm run lint:fix",
+    "cli": "bun src/index.ts",
+    "dev": "bun src/index.ts",
+    "fix": "bun run format && bun run lint:fix",
     "format": "oxfmt",
-    "format:check": "pnpm run format --check",
+    "format:check": "bun run format -- --check",
     "lint": "oxlint --type-aware",
-    "lint:fix": "pnpm run lint --fix --fix-suggestions",
-    "lint:fixall": "pnpm run lint:fix --fix-dangerously",
-    "nuke": "pnpm run clean && git clean -xdf node_modules",
-    "outdated": "pnpm dlx npm-check-updates --interactive --format group",
-    "prepublishOnly": "pnpm run build",
-    "start": "tsx ./dist/index.mjs",
-    "test": "vitest --coverage",
+    "lint:fix": "bun run lint --fix --fix-suggestions",
+    "lint:fixall": "bun run lint:fix --fix-dangerously",
+    "nuke": "bun run clean && git clean -xdf node_modules",
+    "outdated": "bunx npm-check-updates --interactive --format group",
+    "prepublishOnly": "bun run build",
+    "start": "bun ./dist/index.mjs",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^25.0.0",
-    "@vitest/coverage-v8": "^4.1.0",
-    "oxfmt": "^0.41.0",
-    "oxlint": "^1.56.0",
-    "oxlint-tsgolint": "^0.17.1",
-    "tsdown": "^0.21.4",
-    "tsx": "^4.21.0",
-    "vitest": "^4.1.0"
+    "@types/bun": "latest",
+    "oxfmt": "latest",
+    "oxlint": "latest",
+    "oxlint-tsgolint": "latest",
+    "tsdown": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
