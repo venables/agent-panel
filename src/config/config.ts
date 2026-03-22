@@ -10,7 +10,7 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { shellEscape } from "./exec.ts"
+import { shellEscape } from "../utils/exec.ts"
 
 const APP_NAME = "agent-panel"
 
@@ -135,7 +135,7 @@ export async function loadConfig(): Promise<Config> {
     raw = await readFile(path, "utf-8")
   } catch {
     throw new Error(
-      `Config file not found: ${path}\nRun 'panel init' to create a default config.`
+      `Config file not found: ${path}\nRun 'panel config:create' to create a default config.`
     )
   }
 
@@ -184,32 +184,3 @@ export function resolveAgentCommand(
 ): string {
   return agent.command.replaceAll("{{prompt}}", shellEscape(prompt))
 }
-
-/** Default config written by `panel init`. */
-export const DEFAULT_CONFIG_CONTENT = `{
-  "$schema": "https://raw.githubusercontent.com/venables/agent-panel/main/config.schema.json",
-
-  // Agent definitions -- each needs a {{prompt}} placeholder in command
-  "agents": [
-    { "name": "claude", "command": "claude {{prompt}}" },
-    { "name": "codex", "command": "codex {{prompt}}" },
-    { "name": "opencode", "command": "opencode --prompt {{prompt}}" }
-  ],
-
-  // Commands -- use {{arg}} for the optional argument
-  "commands": {
-    "review": {
-      "prompt": "Review PR {{arg}}. Leave comments in this session and not on the PR itself.",
-      "promptNoArg": "Review all changes between this branch and origin/main, including any dirty or unstaged files. Leave comments in this session and not on the PR itself."
-    },
-    "fix": {
-      "prompt": "Fix issue {{arg}}. Implement the fix and show me what you changed.",
-      "requiresArg": true
-    },
-    "explain": {
-      "prompt": "Explain {{arg}} in this codebase. Be thorough.",
-      "requiresArg": true
-    }
-  }
-}
-`

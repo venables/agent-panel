@@ -1,13 +1,14 @@
 # agent-panel
 
-Launch multiple AI coding agents in parallel terminal splits. Ask a panel of
-agents to review your PR, fix an issue, or explain a codebase -- all at once,
-side by side.
+Launch multiple AI coding agents in parallel terminal splits.
+
+Ask a panel of agents to review your PR, fix an issue, or explain a codebase --
+all at once, side by side.
 
 ## Supported terminals
 
-- [cmux](https://cmux.dev) -- full support
 - [Ghostty](https://ghostty.org) 1.3+ -- macOS only, via AppleScript
+- [cmux](https://cmux.dev) -- full support
 
 ## Install
 
@@ -15,26 +16,29 @@ side by side.
 npm install -g agent-panel
 ```
 
+This installs the `panel` binary (alias for `agent-panel`)
+
 ## Quick start
 
 ```bash
-# Create your config file
-panel init
-
-# Review a PR (opens 3 agent splits)
-panel review 123
-
-# Review current branch vs main (including unstaged changes)
-panel review
-
-# Fix an issue
-panel fix ISSUE-456
-
-# Explain something in the codebase
-panel explain "the auth flow"
+# Create your config file to specify which agents to use
+panel config:create
 
 # Send a raw prompt to all agents
 panel what are some ways to improve the error handling here
+
+# Run a "review" command (defined in the config file)
+panel run review 123
+
+# Review current branch vs main (including unstaged changes)
+panel run review
+
+# Fix an issue
+panel run fix ISSUE-456
+
+# Explain something in the codebase
+panel run explain "the auth flow"
+
 ```
 
 The `agent-panel` command also works as an alias for `panel`.
@@ -51,7 +55,7 @@ split to the right.
 
 ## Configuration
 
-Run `panel init` to create `~/.config/agent-panel/config.jsonc`:
+Run `panel config:edit:create` to create `~/.config/agent-panel/config.jsonc`:
 
 ```jsonc
 {
@@ -90,7 +94,7 @@ support JSON Schema (VS Code, Zed, JetBrains, etc.).
 Open the config in your editor:
 
 ```bash
-panel config
+panel config:edit
 ```
 
 This launches `$EDITOR` (or `$VISUAL`, or `vi` as a fallback) with the config
@@ -107,7 +111,7 @@ Add a new key to `commands`:
 }
 ```
 
-Then run it: `panel refactor "the database layer"`
+Then run it: `panel run refactor "the database layer"`
 
 ### Command options
 
@@ -129,51 +133,52 @@ with `{{prompt}}` as the placeholder:
 ## CLI reference
 
 ```
-panel <command> [arg]          Run a configured command
+panel run <command> [arg]      Run a configured command
 panel <prompt...>              Launch agents with a raw prompt
-panel init                     Create default config
-panel list                     List configured commands and agents
-panel config                   Open config in $EDITOR
+panel config:create            Create default config
+panel config:edit              Open config in $EDITOR
 ```
-
-`panel run <command> [arg]` also works as an explicit form.
 
 ## Development
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Run locally
-pnpm run cli review 123
+bun run cli run review 123
 
 # Build for production
-pnpm run build
+bun run build
 
 # Run all checks (format, lint, typecheck, test)
-pnpm check
+bun check
 
 # Auto-fix format and lint issues
-pnpm fix
+bun fix
 ```
 
 ### Project structure
 
 ```
 src/
-  index.ts              CLI entry point
-  config.ts             Config schema, loading, validation (zod)
-  launch.ts             Agent orchestration
-  init.ts               `panel init` command
-  edit-config.ts        `panel config` command
-  list.ts               `panel list` command
-  exec.ts               Node-compatible process utilities
+  index.ts                CLI entry point
+  commands/
+    command-list.ts       Usage/help display
+    config-create.ts      `panel config:create`
+    config-edit.ts        `panel config:edit`
+    launch.ts             Agent orchestration
+  config/
+    config.ts             Schema, loading, validation (zod)
+    default-config.ts     Default config template
   terminal/
-    terminal.ts         Terminal interface
-    cmux.ts             cmux backend
-    ghostty.ts          Ghostty AppleScript backend
-    detect.ts           Auto-detection logic
-    index.ts            Barrel exports
+    terminal.ts           Terminal interface
+    cmux.ts               cmux backend
+    ghostty.ts            Ghostty AppleScript backend
+    detect.ts             Auto-detection logic
+    index.ts              Barrel exports
+  utils/
+    exec.ts               Process execution utilities
 ```
 
 ## License

@@ -2,7 +2,7 @@
  * cmux terminal backend.
  */
 
-import { run } from "../exec.ts"
+import { run } from "../utils/exec.ts"
 import type { PaneHandle, Terminal } from "./terminal.ts"
 
 export function createCmuxTerminal(surfaceId: string): Terminal {

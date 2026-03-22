@@ -1,8 +1,8 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test } from "bun:test"
 
-import type { Config } from "./config.ts"
+import type { Config } from "../config/config.ts"
+import type { PaneHandle, Terminal } from "../terminal/terminal.ts"
 import { launchAgents, launchCommand } from "./launch.ts"
-import type { PaneHandle, Terminal } from "./terminal/terminal.ts"
 
 /**
  * Creates a fake terminal that records all interactions.

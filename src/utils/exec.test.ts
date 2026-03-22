@@ -1,6 +1,6 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test } from "bun:test"
 
-import { shellEscape } from "./exec.ts"
+import { run, shellEscape, sleep } from "./exec.ts"
 
 describe("shellEscape", () => {
   test("wraps simple string in single quotes", () => {
@@ -30,4 +30,22 @@ describe("shellEscape", () => {
   test("preserves spaces and special characters", () => {
     expect(shellEscape("a b\tc\nd")).toBe("'a b\tc\nd'")
   })
+})
+
+describe("run", () => {
+  test("executes a command and returns stdout", async () => {
+    const result = await run("echo", ["hello"])
+    expect(result.trim()).toBe("hello")
+  })
+
+  test("throws on error", async () => {
+    await expect(run("false", [])).rejects.toThrow(/failed/)
+  })
+})
+
+test("sleep waits for a duration", async () => {
+  const start = Date.now()
+  await sleep(10)
+  const end = Date.now()
+  expect(end - start).toBeGreaterThanOrEqual(9)
 })

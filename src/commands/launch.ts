@@ -2,9 +2,9 @@
  * Orchestrates launching agents in terminal splits.
  */
 
-import type { AgentConfig, Config } from "./config.ts"
-import { resolveAgentCommand, resolveCommandPrompt } from "./config.ts"
-import type { PaneHandle, Terminal } from "./terminal/terminal.ts"
+import type { AgentConfig, Config } from "../config/config.ts"
+import { resolveAgentCommand, resolveCommandPrompt } from "../config/config.ts"
+import type { PaneHandle, Terminal } from "../terminal/terminal.ts"
 
 /** Result of launching a single agent. */
 export interface LaunchResult {
