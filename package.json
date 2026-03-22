@@ -19,7 +19,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/venables/agent-panel"
+    "url": "git+https://github.com/venables/agent-panel.git"
   },
   "bin": {
     "agent-panel": "./dist/index.mjs",
@@ -56,9 +56,7 @@
     "oxfmt": "latest",
     "oxlint": "latest",
     "oxlint-tsgolint": "latest",
-    "tsdown": "latest"
-  },
-  "peerDependencies": {
+    "tsdown": "latest",
     "typescript": "^5"
   },
   "engines": {

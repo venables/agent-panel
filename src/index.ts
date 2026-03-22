@@ -14,12 +14,13 @@
  */
 
 import { printUsage } from "./commands/command-list.ts"
-import { init } from "./commands/config-create.ts"
+import { createConfig, init } from "./commands/config-create.ts"
 import { editConfig } from "./commands/config-edit.ts"
 import { launchAgents, launchCommand } from "./commands/launch.ts"
 import type { LaunchResult } from "./commands/launch.ts"
-import { loadConfig } from "./config/config.ts"
+import { configExists, configPath, loadConfig } from "./config/config.ts"
 import { detectTerminal } from "./terminal/index.ts"
+import { confirm } from "./utils/confirm.ts"
 
 function printResults(results: readonly LaunchResult[]): void {
   for (const result of results) {
@@ -48,8 +49,25 @@ async function main(): Promise<void> {
     return
   }
 
+  if (!(await configExists())) {
+    const path = configPath()
+    const shouldCreate = await confirm(
+      `No config found. Create one at ${path}?`
+    )
+
+    if (!shouldCreate) {
+      process.stderr.write(
+        "Run 'panel config:create' when you're ready to set up.\n"
+      )
+      process.exit(1)
+    }
+
+    await createConfig()
+    process.stdout.write(`Created config: ${path}\n`)
+  }
+
   const config = await loadConfig()
-  const { kind, terminal } = detectTerminal()
+  const { terminal } = detectTerminal()
 
   // "panel run <command> [arg]" -- only way to invoke configured commands
   if (subcommand === "run") {
@@ -63,7 +81,7 @@ async function main(): Promise<void> {
     const arg = args[2]
     const description = arg ? `${commandName} ${arg}` : commandName
     process.stdout.write(
-      `[${kind}] Launching ${config.agents.length} agents: ${description}\n`
+      `Launching ${config.agents.length} agents: ${description}\n`
     )
 
     const results = await launchCommand(terminal, config, commandName, arg)
@@ -73,9 +91,7 @@ async function main(): Promise<void> {
 
   // Everything else is a raw prompt
   const prompt = args.join(" ")
-  process.stdout.write(
-    `[${kind}] Launching ${config.agents.length} agents: ${prompt}\n`
-  )
+  process.stdout.write(`Launching ${config.agents.length} agents: ${prompt}\n`)
 
   const results = await launchAgents(
     terminal,

@@ -4,7 +4,7 @@
  * Config file: ~/.config/agent-panel/config.jsonc
  */
 
-import { readFile } from "node:fs/promises"
+import { access, readFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { join } from "node:path"
 
@@ -131,6 +131,20 @@ export function stripJsonc(input: string): string {
   }
 
   return result
+}
+
+/**
+ * Checks whether the config file exists.
+ *
+ * @returns True if the config file exists at the expected path
+ */
+export async function configExists(): Promise<boolean> {
+  try {
+    await access(configPath())
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**

@@ -4,30 +4,38 @@
  * Creates the default config file at ~/.config/agent-panel/config.jsonc.
  */
 
-import { access, mkdir, writeFile } from "node:fs/promises"
+import { mkdir, writeFile } from "node:fs/promises"
 import { dirname } from "node:path"
 
-import { configPath } from "../config/config.ts"
+import { configExists, configPath } from "../config/config.ts"
 import { DEFAULT_CONFIG_CONTENT } from "../config/default-config.ts"
 
 /**
- * Writes the default config file. Errors if it already exists.
+ * Creates the default config file.
+ *
+ * @returns The path to the created config file
+ * @throws If the config file already exists
  */
-export async function init(): Promise<void> {
+export async function createConfig(): Promise<string> {
   const path = configPath()
 
-  const exists = await access(path)
-    .then(() => true)
-    .catch(() => false)
+  await mkdir(dirname(path), { recursive: true })
+  await writeFile(path, DEFAULT_CONFIG_CONTENT, "utf-8")
 
-  if (exists) {
+  return path
+}
+
+/**
+ * CLI handler for `panel config:create`. Errors if the config already exists.
+ */
+export async function init(): Promise<void> {
+  if (await configExists()) {
+    const path = configPath()
     process.stderr.write(`Config already exists: ${path}\n`)
     process.stderr.write("Delete it first if you want to regenerate.\n")
     process.exit(1)
   }
 
-  await mkdir(dirname(path), { recursive: true })
-  await writeFile(path, DEFAULT_CONFIG_CONTENT, "utf-8")
-
+  const path = await createConfig()
   process.stdout.write(`Created config: ${path}\n`)
 }

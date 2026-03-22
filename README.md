@@ -20,10 +20,9 @@ This installs the `panel` binary (alias for `agent-panel`)
 
 ## Quick start
 
-```bash
-# Create your config file to specify which agents to use
-panel config:create
+Just ask a question:
 
+```bash
 # Send a raw prompt to all agents
 panel what are some ways to improve the error handling here
 
@@ -55,7 +54,7 @@ split to the right.
 
 ## Configuration
 
-Run `panel config:edit:create` to create `~/.config/agent-panel/config.jsonc`:
+Run `panel config:create` to create `~/.config/agent-panel/config.jsonc`:
 
 ```jsonc
 {
