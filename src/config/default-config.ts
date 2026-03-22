@@ -23,6 +23,12 @@ export const DEFAULT_CONFIG_CONTENT = `{
       "prompt": "Explain {{arg}} in this codebase. Be thorough.",
       "requiresArg": true
     }
+  },
+
+  // Options
+  "options": {
+    // Set to true to give every agent a new split (leaves your current pane alone)
+    "preserveActivePane": false
   }
 }
 `

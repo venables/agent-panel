@@ -42,11 +42,23 @@ const CommandSchema = z
     "Command with requiresArg must include {{arg}} in prompt"
   )
 
+/** Schema for behavioral options. */
+const OptionsSchema = z.object({
+  preserveActivePane: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "If true, all agents get new splits and the current pane is left alone."
+    )
+})
+
 /** Schema for the full config file. */
 const ConfigSchema = z.object({
   $schema: z.string().optional(),
   agents: z.array(AgentSchema).min(1),
-  commands: z.record(z.string(), CommandSchema)
+  commands: z.record(z.string(), CommandSchema),
+  options: OptionsSchema.optional().default({ preserveActivePane: false })
 })
 
 export type AgentConfig = z.infer<typeof AgentSchema>

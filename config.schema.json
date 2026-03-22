@@ -54,6 +54,18 @@
           }
         }
       }
+    },
+    "options": {
+      "type": "object",
+      "description": "Behavioral options for panel.",
+      "additionalProperties": false,
+      "properties": {
+        "preserveActivePane": {
+          "type": "boolean",
+          "description": "If true, all agents get new splits and the current pane is left alone.",
+          "default": false
+        }
+      }
     }
   }
 }

@@ -33,20 +33,31 @@ async function launchInPane(
   return { agent, pane }
 }
 
+/** Options that control launch behavior. */
+interface LaunchOptions {
+  /** If true, all agents get new splits and the current pane is left alone. */
+  readonly preserveActivePane: boolean
+}
+
+const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = { preserveActivePane: false }
+
 /**
  * Launches all configured agents with a resolved prompt.
  *
- * The first agent reuses the current pane. Subsequent agents get new splits.
+ * When preserveActivePane is false (default), the first agent takes over
+ * the current pane. When true, every agent gets a fresh split.
  *
  * @param terminal - The terminal backend to use
  * @param agents - The agents to launch
  * @param prompt - The resolved prompt string
+ * @param options - Launch behavior options
  * @returns Array of launch results for each agent
  */
 export async function launchAgents(
   terminal: Terminal,
   agents: readonly AgentConfig[],
-  prompt: string
+  prompt: string,
+  options: LaunchOptions = DEFAULT_LAUNCH_OPTIONS
 ): Promise<readonly LaunchResult[]> {
   const results: LaunchResult[] = []
 
@@ -54,8 +65,13 @@ export async function launchAgents(
     const agent = agents[i]!
     const shellCommand = resolveAgentCommand(agent, prompt)
 
+    const useCurrentPane = !options.preserveActivePane && i === 0
+
+    // Splits must be sequential -- each depends on the previous pane's position
     // eslint-disable-next-line no-await-in-loop
-    const pane = i === 0 ? terminal.currentPane() : await terminal.createSplit()
+    const pane = useCurrentPane
+      ? terminal.currentPane()
+      : await terminal.createSplit()
 
     // eslint-disable-next-line no-await-in-loop
     const result = await launchInPane(terminal, agent, shellCommand, pane)
@@ -90,5 +106,5 @@ export async function launchCommand(
   }
 
   const prompt = resolveCommandPrompt(command, arg)
-  return launchAgents(terminal, config.agents, prompt)
+  return launchAgents(terminal, config.agents, prompt, config.options)
 }

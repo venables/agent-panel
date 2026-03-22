@@ -88,6 +88,21 @@ describe("launchAgents", () => {
     const splitCalls = terminal.calls.filter((c) => c.method === "createSplit")
     expect(splitCalls).toHaveLength(0)
   })
+
+  test("creates splits for all agents when preserveActivePane is true", async () => {
+    const terminal = createFakeTerminal()
+
+    const results = await launchAgents(terminal, TWO_AGENTS, "hello", {
+      preserveActivePane: true
+    })
+
+    expect(results).toHaveLength(2)
+    expect(results[0]!.pane.id).toBe("split-1")
+    expect(results[1]!.pane.id).toBe("split-2")
+
+    const splitCalls = terminal.calls.filter((c) => c.method === "createSplit")
+    expect(splitCalls).toHaveLength(2)
+  })
 })
 
 describe("launchCommand", () => {
@@ -103,7 +118,8 @@ describe("launchCommand", () => {
         prompt: "Fix issue {{arg}}.",
         requiresArg: true
       }
-    }
+    },
+    options: { preserveActivePane: false }
   }
 
   test("resolves command prompt and launches agents", async () => {

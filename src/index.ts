@@ -77,7 +77,12 @@ async function main(): Promise<void> {
     `[${kind}] Launching ${config.agents.length} agents: ${prompt}\n`
   )
 
-  const results = await launchAgents(terminal, config.agents, prompt)
+  const results = await launchAgents(
+    terminal,
+    config.agents,
+    prompt,
+    config.options
+  )
   printResults(results)
 }
 

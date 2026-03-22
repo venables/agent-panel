@@ -121,6 +121,20 @@ Then run it: `panel run refactor "the database layer"`
 | `promptNoArg` | `string?`  | Fallback prompt when no argument is given.                             |
 | `requiresArg` | `boolean?` | If `true`, the command fails without an argument. Defaults to `false`. |
 
+### Options
+
+Add an `options` object to configure panel behavior:
+
+```jsonc
+"options": {
+  "preserveActivePane": true
+}
+```
+
+| Field                | Type       | Description                                                                                    |
+| -------------------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| `preserveActivePane` | `boolean?` | If `true`, all agents get new splits and your current pane is left alone. Defaults to `false`. |
+
 ### Adding an agent
 
 Add a new entry to `agents`. The `command` field is the shell command to run,
