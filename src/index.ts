@@ -6,6 +6,7 @@
  *   panel <prompt...>              Launch agents with a raw prompt
  *   panel config:create            Create default config
  *   panel config:edit              Open config in $EDITOR
+ *   panel config:delete            Delete config file
  *
  * Examples:
  *   panel run review 123
@@ -15,6 +16,7 @@
 
 import { printUsage } from "./commands/command-list.ts"
 import { createConfig, init } from "./commands/config-create.ts"
+import { deleteConfig } from "./commands/config-delete.ts"
 import { editConfig } from "./commands/config-edit.ts"
 import { launchAgents, launchCommand } from "./commands/launch.ts"
 import type { LaunchResult } from "./commands/launch.ts"
@@ -46,6 +48,11 @@ async function main(): Promise<void> {
 
   if (subcommand === "config:edit") {
     await editConfig()
+    return
+  }
+
+  if (subcommand === "config:delete") {
+    await deleteConfig()
     return
   }
 
