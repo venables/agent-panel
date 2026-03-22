@@ -16,9 +16,15 @@ test("detectTerminal finds ghostty", () => {
   const oldEnv2 = process.env["TERM_PROGRAM"]
   delete process.env["CMUX_SURFACE_ID"]
   process.env["TERM_PROGRAM"] = "ghostty"
-  const result = detectTerminal()
-  expect(result.kind).toBe("ghostty")
-  expect(result.terminal.name).toBe("ghostty")
+
+  if (process.platform === "darwin") {
+    const result = detectTerminal()
+    expect(result.kind).toBe("ghostty")
+    expect(result.terminal.name).toBe("ghostty")
+  } else {
+    expect(() => detectTerminal()).toThrow(/macOS-only/)
+  }
+
   process.env["CMUX_SURFACE_ID"] = oldEnv1
   process.env["TERM_PROGRAM"] = oldEnv2
 })
