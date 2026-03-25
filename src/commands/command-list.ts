@@ -46,6 +46,7 @@ export async function printUsage(): Promise<void> {
   process.stdout.write("       panel <prompt...>\n")
   process.stdout.write("       panel config:create\n")
   process.stdout.write("       panel config:edit\n")
+  process.stdout.write("       panel config:delete\n")
   process.stdout.write("\n")
 
   try {

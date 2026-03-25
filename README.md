@@ -150,6 +150,7 @@ panel run <command> [arg]      Run a configured command
 panel <prompt...>              Launch agents with a raw prompt
 panel config:create            Create default config
 panel config:edit              Open config in $EDITOR
+panel config:delete            Delete config file
 ```
 
 ## Development
