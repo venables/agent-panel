@@ -148,6 +148,22 @@ export function createGhosttyTerminal(): Terminal {
       return { id: newPaneId }
     },
 
+    async createTab(): Promise<PaneHandle> {
+      const newPaneId = await runAppleScript([
+        'tell application "Ghostty"',
+        "  activate",
+        '  tell application "System Events" to keystroke "t" using command down',
+        "  delay 0.5",
+        "  set newTab to selected tab of front window",
+        "  set newTerminal to focused terminal of newTab",
+        "  return id of newTerminal",
+        "end tell"
+      ])
+
+      activePaneId = newPaneId
+      return { id: newPaneId }
+    },
+
     async sendText(pane: PaneHandle, text: string): Promise<void> {
       await inputText(pane, text)
     },

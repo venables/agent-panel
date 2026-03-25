@@ -5,6 +5,22 @@
 import { run } from "../utils/exec.ts"
 import type { PaneHandle, Terminal } from "./terminal.ts"
 
+/**
+ * Parses a cmux surface reference from command output.
+ *
+ * @param output - Raw stdout from a cmux command
+ * @returns A pane handle with the parsed surface ID
+ */
+function parseSurfaceRef(output: string): PaneHandle {
+  const match = output.match(/surface:\d+/)
+
+  if (!match) {
+    throw new Error(`Could not parse surface ref from cmux output: ${output}`)
+  }
+
+  return { id: match[0] }
+}
+
 export function createCmuxTerminal(surfaceId: string): Terminal {
   return {
     name: "cmux",
@@ -15,15 +31,12 @@ export function createCmuxTerminal(surfaceId: string): Terminal {
 
     async createSplit(): Promise<PaneHandle> {
       const output = await run("cmux", ["new-split", "right"])
-      const match = output.match(/surface:\d+/)
+      return parseSurfaceRef(output)
+    },
 
-      if (!match) {
-        throw new Error(
-          `Could not parse surface ref from cmux output: ${output}`
-        )
-      }
-
-      return { id: match[0] }
+    async createTab(): Promise<PaneHandle> {
+      const output = await run("cmux", ["new-surface"])
+      return parseSurfaceRef(output)
     },
 
     async sendText(pane: PaneHandle, text: string): Promise<void> {

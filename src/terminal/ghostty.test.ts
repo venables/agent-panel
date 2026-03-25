@@ -18,6 +18,13 @@ describe.skipIf(process.platform === "darwin")(
       )
     })
 
+    test("createTab fails", async () => {
+      const terminal = createGhosttyTerminal()
+      await expect(terminal.createTab()).rejects.toThrow(
+        /osascript|failed|Ghostty/
+      )
+    })
+
     test("sendText fails", async () => {
       const terminal = createGhosttyTerminal()
       await expect(terminal.sendText({ id: "1" }, "hello")).rejects.toThrow(
