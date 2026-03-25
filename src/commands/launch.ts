@@ -107,13 +107,15 @@ export async function launchAgents(
  * @param config - The full config
  * @param commandName - The command to run (e.g. "review")
  * @param arg - Optional argument for the command
+ * @param optionsOverride - Optional launch options that override config defaults
  * @returns Array of launch results for each agent
  */
 export async function launchCommand(
   terminal: Terminal,
   config: Config,
   commandName: string,
-  arg: string | undefined
+  arg: string | undefined,
+  optionsOverride?: LaunchOptions
 ): Promise<readonly LaunchResult[]> {
   const command = config.commands[commandName]
 
@@ -125,5 +127,10 @@ export async function launchCommand(
   }
 
   const prompt = resolveCommandPrompt(command, arg)
-  return launchAgents(terminal, config.agents, prompt, config.options)
+  return launchAgents(
+    terminal,
+    config.agents,
+    prompt,
+    optionsOverride ?? config.options
+  )
 }
