@@ -1,7 +1,7 @@
 /**
  * Usage display for panel.
  *
- * Shows available commands from the user's config.
+ * Shows built-in commands, configured commands, and agent summary.
  */
 
 import type { Config } from "../config/config.ts"
@@ -27,13 +27,17 @@ function formatCommand(
  * @param config - The loaded config
  */
 function printConfigSummary(config: Config): void {
-  process.stdout.write(`Commands (from ${configPath()}):\n`)
-  for (const [name, command] of Object.entries(config.commands)) {
-    process.stdout.write(`  panel run ${formatCommand(name, command)}\n`)
+  const commandEntries = Object.entries(config.commands)
+
+  if (commandEntries.length > 0) {
+    process.stdout.write("\nConfigured commands:\n")
+    for (const [name, command] of commandEntries) {
+      process.stdout.write(`  panel run ${formatCommand(name, command)}\n`)
+    }
   }
-  process.stdout.write("\n")
+
   process.stdout.write(
-    `Agents: ${config.agents.map((a) => a.name).join(", ")}\n`
+    `\nAgents: ${config.agents.map((a) => a.name).join(", ")}\n`
   )
   process.stdout.write(`Config: ${configPath()}\n`)
 }
@@ -42,19 +46,45 @@ function printConfigSummary(config: Config): void {
  * Prints full usage help, including available commands if config exists.
  */
 export async function printUsage(): Promise<void> {
-  process.stdout.write("Usage: panel run <command> [arg]\n")
-  process.stdout.write("       panel <prompt...>\n")
-  process.stdout.write("       panel config:create\n")
-  process.stdout.write("       panel config:edit\n")
-  process.stdout.write("       panel config:delete\n")
+  process.stdout.write(
+    "Launch multiple AI coding agents in parallel terminal splits or tabs.\n\n"
+  )
+
+  process.stdout.write("Usage:\n")
+  process.stdout.write(
+    "  panel <prompt...>              Send a prompt to all agents\n"
+  )
+  process.stdout.write(
+    "  panel run <command> [arg]       Run a configured command\n"
+  )
   process.stdout.write("\n")
+
+  process.stdout.write("Config:\n")
+  process.stdout.write(
+    "  panel config create            Create config (interactive)\n"
+  )
+  process.stdout.write(
+    "  panel config edit              Open config in $EDITOR\n"
+  )
+  process.stdout.write("  panel config delete            Delete config file\n")
+  process.stdout.write("\n")
+
+  process.stdout.write("Options:\n")
+  process.stdout.write(
+    "  -t, --tabs                     Use tabs instead of splits\n"
+  )
+  process.stdout.write(
+    "  -p, --preserve                 Keep current pane, give agents new panes\n"
+  )
+  process.stdout.write("  -h, --help                     Show this help\n")
+  process.stdout.write("  -v, --version                  Show version\n")
 
   try {
     const config = await loadConfig()
     printConfigSummary(config)
   } catch {
     process.stdout.write(
-      `No config found. Run 'panel config:create' to get started.\n`
+      "\nNo config found. Run 'panel config create' to get started.\n"
     )
   }
 }

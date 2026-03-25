@@ -6,16 +6,16 @@
  * — instead routes manually to support catch-all prompt mode.
  */
 
-import { defineCommand, showUsage } from "citty"
+import { defineCommand } from "citty"
 
-import { createConfig, init } from "../commands/config-create.ts"
+import { printUsage } from "../commands/command-list.ts"
+import { createConfig, init, runWizard } from "../commands/config-create.ts"
 import { deleteConfig } from "../commands/config-delete.ts"
 import { editConfig } from "../commands/config-edit.ts"
 import { launchAgents, launchCommand } from "../commands/launch.ts"
 import type { LaunchResult } from "../commands/launch.ts"
-import { configExists, configPath, loadConfig } from "../config/config.ts"
+import { configExists, loadConfig } from "../config/config.ts"
 import { detectTerminal } from "../terminal/index.ts"
-import { confirm } from "../utils/confirm.ts"
 import type { CliFlags } from "./options.ts"
 import { launchFlags, mergeOptions } from "./options.ts"
 import { resolveRoute } from "./route.ts"
@@ -37,18 +37,15 @@ async function ensureConfig(): Promise<boolean> {
     return true
   }
 
-  const path = configPath()
-  const shouldCreate = await confirm(`No config found. Create one at ${path}?`)
-
-  if (!shouldCreate) {
+  const content = await runWizard()
+  if (!content) {
     process.stderr.write(
       "Run 'panel config create' when you're ready to set up.\n"
     )
     return false
   }
 
-  await createConfig()
-  process.stdout.write(`Created config: ${path}\n`)
+  await createConfig(content)
   return true
 }
 
@@ -93,7 +90,7 @@ export const main = defineCommand({
     }
 
     if (words.length === 0) {
-      await showUsage(main)
+      await printUsage()
       return
     }
 
@@ -141,6 +138,6 @@ export const main = defineCommand({
     }
 
     // help or unexpected - show usage
-    await showUsage(main)
+    await printUsage()
   }
 })
