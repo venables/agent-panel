@@ -14,7 +14,7 @@ interface ConfigRoute {
   readonly action: "create" | "edit" | "delete"
 }
 
-/** Route to a configured command (e.g. "panel run review 123"). */
+/** Route to a configured command (e.g. "panel review 123"). */
 interface CommandRoute {
   readonly type: "command"
   readonly name: string
@@ -22,7 +22,7 @@ interface CommandRoute {
   readonly flags: CliFlags
 }
 
-/** Route to a raw prompt (e.g. "panel build an app"). */
+/** Route to a raw prompt (e.g. "panel ask build an app"). */
 interface PromptRoute {
   readonly type: "prompt"
   readonly prompt: string
@@ -49,14 +49,38 @@ function isConfigAction(value: string): value is ConfigAction {
 }
 
 /**
+ * Builds a prompt route from an array of words.
+ *
+ * @param promptWords - Words to join into a prompt
+ * @param flags - Parsed CLI flags
+ * @returns A prompt route
+ * @throws When no prompt words are provided
+ */
+function buildPromptRoute(
+  promptWords: readonly string[],
+  flags: CliFlags
+): PromptRoute {
+  const prompt = promptWords.join(" ").trim()
+
+  if (prompt.length === 0) {
+    throw new Error("No prompt provided. Usage: panel ask <prompt...>")
+  }
+
+  return { type: "prompt", prompt, flags }
+}
+
+/**
  * Resolves raw CLI arguments into a typed route.
  *
- * Routing rules:
- * - No positional words -> help
- * - First word is "config" -> config subcommand
- * - First word is "run" + second word matches a configured command -> command
- * - First word is "run" + no match -> prompt (with "run" prepended)
- * - Anything else -> prompt
+ * Routing rules (in priority order):
+ * 1. No positional words -> help
+ * 2. "--" in rawArgs -> everything after is a raw prompt
+ * 3. First word is "ask" -> raw prompt (remaining words)
+ * 4. First word is "config" -> config subcommand
+ * 5. First word is "run" + second word matches config -> command
+ * 6. First word is "run" + no match -> prompt (with "run" prepended)
+ * 7. First word matches a configured command -> command (shortcut)
+ * 8. Anything else -> prompt
  *
  * @param rawArgs - Raw argument array from citty
  * @param flags - Parsed CLI flags (--tabs, --preserve)
@@ -68,10 +92,23 @@ export function resolveRoute(
   flags: CliFlags,
   configCommandNames: readonly string[]
 ): Route {
+  // Check for -- prompt escape before extracting words
+  const doubleDashIndex = rawArgs.indexOf("--")
+
+  if (doubleDashIndex !== -1) {
+    const afterDash = rawArgs.slice(doubleDashIndex + 1)
+    return buildPromptRoute(afterDash, flags)
+  }
+
   const words = extractWords(rawArgs)
 
   if (words.length === 0) {
     return { type: "help" }
+  }
+
+  // "ask" prefix -> raw prompt (bypasses command matching)
+  if (words[0] === "ask") {
+    return buildPromptRoute(words.slice(1), flags)
   }
 
   if (words[0] === "config") {
@@ -87,6 +124,7 @@ export function resolveRoute(
     return { type: "config", action }
   }
 
+  // Explicit "run" prefix
   if (words[0] === "run") {
     const rest = words.slice(1)
 
@@ -102,6 +140,16 @@ export function resolveRoute(
     // "run" is included in the prompt when no config command matches
     const prompt = words.join(" ")
     return { type: "prompt", prompt, flags }
+  }
+
+  // Command shortcut: first word matches a configured command
+  if (words[0] && configCommandNames.includes(words[0])) {
+    return {
+      type: "command",
+      name: words[0],
+      arg: words[1],
+      flags
+    }
   }
 
   // Everything else is a raw prompt

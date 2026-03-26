@@ -20,24 +20,33 @@ This installs the `panel` binary (alias for `agent-panel`)
 
 ## Quick start
 
-Just ask a question:
+Run configured commands directly:
 
 ```bash
-# Send a raw prompt to all agents
-panel what are some ways to improve the error handling here
-
-# Run a "review" command (defined in the config file)
-panel run review 123
+# Review a PR (uses the "review" command from your config)
+panel review 123
 
 # Review current branch vs main (including unstaged changes)
-panel run review
+panel review
 
 # Fix an issue
-panel run fix ISSUE-456
+panel fix ISSUE-456
 
 # Explain something in the codebase
-panel run explain "the auth flow"
+panel explain "the auth flow"
+```
 
+Send a raw prompt to all agents:
+
+```bash
+# "ask" sends the literal text to all agents
+panel ask what are some ways to improve the error handling here
+
+# Use "ask" to bypass command matching
+panel ask review this for security issues
+
+# "--" works as an alias for "ask"
+panel -- review this for security issues
 ```
 
 The `agent-panel` command also works as an alias for `panel`.
@@ -54,7 +63,7 @@ split to the right.
 
 ## Configuration
 
-Run `panel config:create` to create `~/.config/agent-panel/config.jsonc`:
+Run `panel config create` to create `~/.config/agent-panel/config.jsonc`:
 
 ```jsonc
 {
@@ -93,7 +102,7 @@ support JSON Schema (VS Code, Zed, JetBrains, etc.).
 Open the config in your editor:
 
 ```bash
-panel config:edit
+panel config edit
 ```
 
 This launches `$EDITOR` (or `$VISUAL`, or `vi` as a fallback) with the config
@@ -110,7 +119,7 @@ Add a new key to `commands`:
 }
 ```
 
-Then run it: `panel run refactor "the database layer"`
+Then run it: `panel refactor "the database layer"`
 
 ### Command options
 
@@ -148,11 +157,12 @@ with `{{prompt}}` as the placeholder:
 ## CLI reference
 
 ```
-panel run <command> [arg]      Run a configured command
-panel <prompt...>              Launch agents with a raw prompt
-panel config:create            Create default config
-panel config:edit              Open config in $EDITOR
-panel config:delete            Delete config file
+panel <command> [arg]          Run a configured command
+panel ask <prompt...>          Send a raw prompt to all agents
+panel -- <prompt...>           Send a raw prompt (alias for ask)
+panel config create            Create config (interactive)
+panel config edit              Open config in $EDITOR
+panel config delete            Delete config file
 ```
 
 ## Development
@@ -162,7 +172,7 @@ panel config:delete            Delete config file
 bun install
 
 # Run locally
-bun run cli run review 123
+bun run cli review 123
 
 # Build for production
 bun run build
@@ -179,14 +189,22 @@ bun fix
 ```
 src/
   index.ts                CLI entry point
+  cli/
+    main.ts               Root command, flow orchestration
+    route.ts              Route resolution (pure function)
+    args.ts               Positional word extraction
+    options.ts            Flag definitions, option merging
   commands/
     command-list.ts       Usage/help display
-    config-create.ts      `panel config:create`
-    config-edit.ts        `panel config:edit`
+    config-create.ts      Interactive config wizard
+    config-edit.ts        Open config in $EDITOR
+    config-delete.ts      Confirm and delete config
     launch.ts             Agent orchestration
+  agents/
+    known-agents.ts       Registry of supported agent CLIs
+    known-commands.ts     Registry of pre-configured commands
   config/
     config.ts             Schema, loading, validation (zod)
-    default-config.ts     Default config template
   terminal/
     terminal.ts           Terminal interface
     cmux.ts               cmux backend

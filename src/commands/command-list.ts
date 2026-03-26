@@ -32,7 +32,7 @@ function printConfigSummary(config: Config): void {
   if (commandEntries.length > 0) {
     process.stdout.write("\nConfigured commands:\n")
     for (const [name, command] of commandEntries) {
-      process.stdout.write(`  panel run ${formatCommand(name, command)}\n`)
+      process.stdout.write(`  panel ${formatCommand(name, command)}\n`)
     }
   }
 
@@ -52,10 +52,13 @@ export async function printUsage(): Promise<void> {
 
   process.stdout.write("Usage:\n")
   process.stdout.write(
-    "  panel <prompt...>              Send a prompt to all agents\n"
+    "  panel <command> [arg]           Run a configured command\n"
   )
   process.stdout.write(
-    "  panel run <command> [arg]       Run a configured command\n"
+    "  panel ask <prompt...>           Send a raw prompt to all agents\n"
+  )
+  process.stdout.write(
+    "  panel -- <prompt...>            Send a raw prompt (alias for ask)\n"
   )
   process.stdout.write("\n")
 

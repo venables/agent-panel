@@ -54,6 +54,108 @@ describe("resolveRoute", () => {
     })
   })
 
+  describe("ask routes (raw prompt)", () => {
+    test("ask sends remaining words as prompt", () => {
+      const route = resolveRoute(
+        ["ask", "what", "is", "going", "on"],
+        NO_FLAGS,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "what is going on",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("ask with command name sends it as literal prompt", () => {
+      const route = resolveRoute(["ask", "review", "429"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "review 429",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("ask with 'run' sends it as literal prompt", () => {
+      const route = resolveRoute(
+        ["ask", "run", "me", "a", "test"],
+        NO_FLAGS,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "run me a test",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("ask with --tabs passes flag", () => {
+      const route = resolveRoute(
+        ["ask", "hello", "--tabs"],
+        TABS_FLAG,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "hello",
+        flags: TABS_FLAG
+      })
+    })
+
+    test("ask with no prompt throws", () => {
+      expect(() => resolveRoute(["ask"], NO_FLAGS, COMMANDS)).toThrow(
+        "No prompt provided"
+      )
+    })
+  })
+
+  describe("-- escape routes (raw prompt)", () => {
+    test("-- sends remaining args as prompt", () => {
+      const route = resolveRoute(["--", "review", "429"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "review 429",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("-- with flags before it passes flags", () => {
+      const route = resolveRoute(
+        ["--tabs", "--", "review", "429"],
+        TABS_FLAG,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "review 429",
+        flags: TABS_FLAG
+      })
+    })
+
+    test("-- with flag-like words after includes them in prompt", () => {
+      const route = resolveRoute(["--", "--tabs", "review"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "--tabs review",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("-- with no prompt throws", () => {
+      expect(() => resolveRoute(["--"], NO_FLAGS, COMMANDS)).toThrow(
+        "No prompt provided"
+      )
+    })
+  })
+
   describe("command routes (panel run <command>)", () => {
     test("run review 123 triggers command route", () => {
       const route = resolveRoute(["run", "review", "123"], NO_FLAGS, COMMANDS)
@@ -133,7 +235,57 @@ describe("resolveRoute", () => {
     })
   })
 
-  describe("root prompt routes", () => {
+  describe("command shortcut routes (panel <command>)", () => {
+    test("review 429 matches config command", () => {
+      const route = resolveRoute(["review", "429"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "command",
+        name: "review",
+        arg: "429",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("fix ISSUE-456 matches config command", () => {
+      const route = resolveRoute(["fix", "ISSUE-456"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "command",
+        name: "fix",
+        arg: "ISSUE-456",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("explain with no arg passes undefined", () => {
+      const route = resolveRoute(["explain"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "command",
+        name: "explain",
+        arg: undefined,
+        flags: NO_FLAGS
+      })
+    })
+
+    test("review 429 --tabs passes tabs flag", () => {
+      const route = resolveRoute(
+        ["review", "429", "--tabs"],
+        TABS_FLAG,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "command",
+        name: "review",
+        arg: "429",
+        flags: TABS_FLAG
+      })
+    })
+  })
+
+  describe("root prompt routes (fallthrough)", () => {
     test("unquoted multi-word prompt", () => {
       const route = resolveRoute(["build", "an", "app"], NO_FLAGS, COMMANDS)
 
