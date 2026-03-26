@@ -2,26 +2,27 @@
  * CLI entry point for panel.
  *
  * Usage:
- *   panel run <command> [arg]        Run a configured command
- *   panel <prompt...> [--tabs] [-p]  Launch agents with a raw prompt
- *   panel config create              Create default config
+ *   panel <command> [arg]            Run a configured command
+ *   panel raw <prompt...>            Send a raw prompt to all agents
+ *   panel config create              Create config (interactive)
  *   panel config edit                Open config in $EDITOR
  *   panel config delete              Delete config file
  *
  * Examples:
- *   panel run review 123
- *   panel run explain "the auth flow"
- *   panel what are some ways to improve this --tabs
+ *   panel review 123
+ *   panel explain "the auth flow"
+ *   panel raw what are some ways to improve this --tabs
  */
 
-import { runCommand, showUsage } from "citty"
+import { runCommand } from "citty"
 
 import { main } from "./cli/main.ts"
+import { printUsage } from "./commands/command-list.ts"
 
 const rawArgs = process.argv.slice(2)
 
 if (rawArgs.includes("--help") || rawArgs.includes("-h")) {
-  void showUsage(main).then(() => process.exit(0))
+  void printUsage().then(() => process.exit(0))
 } else if (rawArgs.length === 1 && rawArgs[0] === "--version") {
   process.stdout.write("0.2.0\n")
 } else {
