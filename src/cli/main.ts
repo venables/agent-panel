@@ -137,7 +137,16 @@ export const main = defineCommand({
       return
     }
 
-    // help or unexpected - show usage
+    if (route.type === "unknown") {
+      const available = commandNames.join(", ")
+      process.stderr.write(
+        `Unknown command: "${route.word}". Available: ${available}\n`
+      )
+      process.stderr.write("Use 'panel raw <prompt>' to send a raw prompt.\n")
+      process.exit(1)
+    }
+
+    // help — show usage
     await printUsage()
   }
 })

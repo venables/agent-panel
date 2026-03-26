@@ -55,10 +55,10 @@ export async function printUsage(): Promise<void> {
     "  panel <command> [arg]           Run a configured command\n"
   )
   process.stdout.write(
-    "  panel ask <prompt...>           Send a raw prompt to all agents\n"
+    "  panel raw <prompt...>           Send a raw prompt to all agents\n"
   )
   process.stdout.write(
-    "  panel -- <prompt...>            Send a raw prompt (alias for ask)\n"
+    "  panel -- <prompt...>            Send a raw prompt (alias for raw)\n"
   )
   process.stdout.write("\n")
 

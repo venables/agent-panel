@@ -39,11 +39,11 @@ panel explain "the auth flow"
 Send a raw prompt to all agents:
 
 ```bash
-# "ask" sends the literal text to all agents
-panel ask what are some ways to improve the error handling here
+# "raw" sends the literal text to all agents
+panel raw what are some ways to improve the error handling here
 
-# Use "ask" to bypass command matching
-panel ask review this for security issues
+# Use "raw" to bypass command matching
+panel raw review this for security issues
 
 # "--" works as an alias for "ask"
 panel -- review this for security issues
@@ -158,8 +158,8 @@ with `{{prompt}}` as the placeholder:
 
 ```
 panel <command> [arg]          Run a configured command
-panel ask <prompt...>          Send a raw prompt to all agents
-panel -- <prompt...>           Send a raw prompt (alias for ask)
+panel raw <prompt...>          Send a raw prompt to all agents
+panel -- <prompt...>           Send a raw prompt (alias for raw)
 panel config create            Create config (interactive)
 panel config edit              Open config in $EDITOR
 panel config delete            Delete config file

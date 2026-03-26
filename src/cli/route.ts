@@ -22,7 +22,7 @@ interface CommandRoute {
   readonly flags: CliFlags
 }
 
-/** Route to a raw prompt (e.g. "panel ask build an app"). */
+/** Route to a raw prompt (e.g. "panel raw build an app"). */
 interface PromptRoute {
   readonly type: "prompt"
   readonly prompt: string
@@ -34,7 +34,18 @@ interface HelpRoute {
   readonly type: "help"
 }
 
-export type Route = ConfigRoute | CommandRoute | PromptRoute | HelpRoute
+/** Route when the first word does not match any known command. */
+interface UnknownRoute {
+  readonly type: "unknown"
+  readonly word: string
+}
+
+export type Route =
+  | ConfigRoute
+  | CommandRoute
+  | PromptRoute
+  | HelpRoute
+  | UnknownRoute
 
 type ConfigAction = "create" | "edit" | "delete"
 
@@ -63,7 +74,7 @@ function buildPromptRoute(
   const prompt = promptWords.join(" ").trim()
 
   if (prompt.length === 0) {
-    throw new Error("No prompt provided. Usage: panel ask <prompt...>")
+    throw new Error("No prompt provided. Usage: panel raw <prompt...>")
   }
 
   return { type: "prompt", prompt, flags }
@@ -75,12 +86,11 @@ function buildPromptRoute(
  * Routing rules (in priority order):
  * 1. No positional words -> help
  * 2. "--" in rawArgs -> everything after is a raw prompt
- * 3. First word is "ask" -> raw prompt (remaining words)
+ * 3. First word is "raw" -> raw prompt (remaining words)
  * 4. First word is "config" -> config subcommand
  * 5. First word is "run" + second word matches config -> command
- * 6. First word is "run" + no match -> prompt (with "run" prepended)
- * 7. First word matches a configured command -> command (shortcut)
- * 8. Anything else -> prompt
+ * 6. First word matches a configured command -> command (shortcut)
+ * 7. Anything else -> unknown command error
  *
  * @param rawArgs - Raw argument array from citty
  * @param flags - Parsed CLI flags (--tabs, --preserve)
@@ -106,8 +116,8 @@ export function resolveRoute(
     return { type: "help" }
   }
 
-  // "ask" prefix -> raw prompt (bypasses command matching)
-  if (words[0] === "ask") {
+  // "raw" prefix -> raw prompt (bypasses command matching)
+  if (words[0] === "raw") {
     return buildPromptRoute(words.slice(1), flags)
   }
 
@@ -129,30 +139,29 @@ export function resolveRoute(
     const rest = words.slice(1)
 
     if (rest.length > 0 && rest[0] && configCommandNames.includes(rest[0])) {
+      const arg = rest.slice(1).join(" ") || undefined
       return {
         type: "command",
         name: rest[0],
-        arg: rest[1],
+        arg,
         flags
       }
     }
 
-    // "run" is included in the prompt when no config command matches
-    const prompt = words.join(" ")
-    return { type: "prompt", prompt, flags }
+    return { type: "unknown", word: rest[0] ?? "run" }
   }
 
   // Command shortcut: first word matches a configured command
   if (words[0] && configCommandNames.includes(words[0])) {
+    const arg = words.slice(1).join(" ") || undefined
     return {
       type: "command",
       name: words[0],
-      arg: words[1],
+      arg,
       flags
     }
   }
 
-  // Everything else is a raw prompt
-  const prompt = words.join(" ")
-  return { type: "prompt", prompt, flags }
+  // No match — unknown command
+  return { type: "unknown", word: words[0] ?? "" }
 }

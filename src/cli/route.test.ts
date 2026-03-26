@@ -54,10 +54,10 @@ describe("resolveRoute", () => {
     })
   })
 
-  describe("ask routes (raw prompt)", () => {
-    test("ask sends remaining words as prompt", () => {
+  describe("raw routes (raw prompt)", () => {
+    test("raw sends remaining words as prompt", () => {
       const route = resolveRoute(
-        ["ask", "what", "is", "going", "on"],
+        ["raw", "what", "is", "going", "on"],
         NO_FLAGS,
         COMMANDS
       )
@@ -69,8 +69,8 @@ describe("resolveRoute", () => {
       })
     })
 
-    test("ask with command name sends it as literal prompt", () => {
-      const route = resolveRoute(["ask", "review", "429"], NO_FLAGS, COMMANDS)
+    test("raw with command name sends it as literal prompt", () => {
+      const route = resolveRoute(["raw", "review", "429"], NO_FLAGS, COMMANDS)
 
       expect(route).toEqual({
         type: "prompt",
@@ -79,9 +79,9 @@ describe("resolveRoute", () => {
       })
     })
 
-    test("ask with 'run' sends it as literal prompt", () => {
+    test("raw with 'run' sends it as literal prompt", () => {
       const route = resolveRoute(
-        ["ask", "run", "me", "a", "test"],
+        ["raw", "run", "me", "a", "test"],
         NO_FLAGS,
         COMMANDS
       )
@@ -93,9 +93,9 @@ describe("resolveRoute", () => {
       })
     })
 
-    test("ask with --tabs passes flag", () => {
+    test("raw with --tabs passes flag", () => {
       const route = resolveRoute(
-        ["ask", "hello", "--tabs"],
+        ["raw", "hello", "--tabs"],
         TABS_FLAG,
         COMMANDS
       )
@@ -107,8 +107,8 @@ describe("resolveRoute", () => {
       })
     })
 
-    test("ask with no prompt throws", () => {
-      expect(() => resolveRoute(["ask"], NO_FLAGS, COMMANDS)).toThrow(
+    test("raw with no prompt throws", () => {
+      expect(() => resolveRoute(["raw"], NO_FLAGS, COMMANDS)).toThrow(
         "No prompt provided"
       )
     })
@@ -195,43 +195,21 @@ describe("resolveRoute", () => {
     })
   })
 
-  describe("run as prompt (no config command match)", () => {
-    test("run with unknown first word becomes prompt including 'run'", () => {
-      const route = resolveRoute(
-        ["run", "an", "experiment", "on", "something"],
-        NO_FLAGS,
-        COMMANDS
-      )
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "run an experiment on something",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("run with no following words includes 'run' in prompt", () => {
-      const route = resolveRoute(["run"], NO_FLAGS, COMMANDS)
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "run",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("run with non-matching words includes 'run' in prompt", () => {
+  describe("run with unknown command", () => {
+    test("run with unknown command returns unknown route", () => {
       const route = resolveRoute(
         ["run", "an", "experiment"],
         NO_FLAGS,
         COMMANDS
       )
 
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "run an experiment",
-        flags: NO_FLAGS
-      })
+      expect(route).toEqual({ type: "unknown", word: "an" })
+    })
+
+    test("run with no following words returns unknown route", () => {
+      const route = resolveRoute(["run"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({ type: "unknown", word: "run" })
     })
   })
 
@@ -254,6 +232,36 @@ describe("resolveRoute", () => {
         type: "command",
         name: "fix",
         arg: "ISSUE-456",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("explain joins multiple words into arg", () => {
+      const route = resolveRoute(
+        ["explain", "the", "auth", "flow"],
+        NO_FLAGS,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "command",
+        name: "explain",
+        arg: "the auth flow",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("run explain joins multiple words into arg", () => {
+      const route = resolveRoute(
+        ["run", "explain", "the", "auth", "flow"],
+        NO_FLAGS,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "command",
+        name: "explain",
+        arg: "the auth flow",
         flags: NO_FLAGS
       })
     })
@@ -285,39 +293,17 @@ describe("resolveRoute", () => {
     })
   })
 
-  describe("root prompt routes (fallthrough)", () => {
-    test("unquoted multi-word prompt", () => {
+  describe("unknown command routes", () => {
+    test("unknown first word returns unknown route", () => {
       const route = resolveRoute(["build", "an", "app"], NO_FLAGS, COMMANDS)
 
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "build an app",
-        flags: NO_FLAGS
-      })
+      expect(route).toEqual({ type: "unknown", word: "build" })
     })
 
-    test("prompt with --tabs flag", () => {
-      const route = resolveRoute(
-        ["build", "an", "app", "--tabs"],
-        TABS_FLAG,
-        COMMANDS
-      )
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "build an app",
-        flags: TABS_FLAG
-      })
-    })
-
-    test("single word prompt", () => {
+    test("single unknown word returns unknown route", () => {
       const route = resolveRoute(["hello"], NO_FLAGS, COMMANDS)
 
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "hello",
-        flags: NO_FLAGS
-      })
+      expect(route).toEqual({ type: "unknown", word: "hello" })
     })
   })
 })

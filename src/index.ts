@@ -2,16 +2,16 @@
  * CLI entry point for panel.
  *
  * Usage:
- *   panel run <command> [arg]        Run a configured command
- *   panel <prompt...> [--tabs] [-p]  Launch agents with a raw prompt
- *   panel config create              Create default config
+ *   panel <command> [arg]            Run a configured command
+ *   panel raw <prompt...>            Send a raw prompt to all agents
+ *   panel config create              Create config (interactive)
  *   panel config edit                Open config in $EDITOR
  *   panel config delete              Delete config file
  *
  * Examples:
- *   panel run review 123
- *   panel run explain "the auth flow"
- *   panel what are some ways to improve this --tabs
+ *   panel review 123
+ *   panel explain "the auth flow"
+ *   panel raw what are some ways to improve this --tabs
  */
 
 import { runCommand } from "citty"
