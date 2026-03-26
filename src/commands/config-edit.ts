@@ -40,7 +40,7 @@ export async function editConfig(): Promise<void> {
 
   if (!existsSync(path)) {
     process.stderr.write(`Config file not found: ${path}\n`)
-    process.stderr.write('Run "panel config:create" to create one.\n')
+    process.stderr.write('Run "panel config create" to create one.\n')
     process.exit(1)
   }
 

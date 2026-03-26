@@ -1,5 +1,5 @@
 /**
- * Handles the `panel config:create` command.
+ * Handles the `panel config create` command.
  *
  * Creates the default config file at ~/.config/agent-panel/config.jsonc.
  */
@@ -26,7 +26,7 @@ export async function createConfig(): Promise<string> {
 }
 
 /**
- * CLI handler for `panel config:create`. Errors if the config already exists.
+ * CLI handler for `panel config create`. Errors if the config already exists.
  */
 export async function init(): Promise<void> {
   if (await configExists()) {

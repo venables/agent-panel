@@ -1,5 +1,5 @@
 /**
- * Handles the `panel config:delete` command.
+ * Handles the `panel config delete` command.
  *
  * Deletes the config file after user confirmation.
  */
@@ -10,7 +10,7 @@ import { configExists, configPath } from "../config/config.ts"
 import { confirm } from "../utils/confirm.ts"
 
 /**
- * CLI handler for `panel config:delete`.
+ * CLI handler for `panel config delete`.
  *
  * Prompts for confirmation before deleting. Exits with an error if no
  * config file exists.

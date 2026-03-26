@@ -169,7 +169,7 @@ export async function loadConfig(): Promise<Config> {
     raw = await readFile(path, "utf-8")
   } catch {
     throw new Error(
-      `Config file not found: ${path}\nRun 'panel config:create' to create a default config.`
+      `Config file not found: ${path}\nRun 'panel config create' to create a default config.`
     )
   }
 

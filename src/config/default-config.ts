@@ -1,4 +1,4 @@
-/** Default config written by `panel config:create`. */
+/** Default config written by `panel config create`. */
 export const DEFAULT_CONFIG_CONTENT = `{
   "$schema": "https://raw.githubusercontent.com/venables/agent-panel/main/config.schema.json",
 
