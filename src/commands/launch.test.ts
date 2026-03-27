@@ -129,6 +129,36 @@ describe("launchAgents", () => {
     expect(tabCalls).toHaveLength(1)
   })
 
+  test("prefixes commands with cd when workdir is set", async () => {
+    const terminal = createFakeTerminal()
+
+    await launchAgents(terminal, TWO_AGENTS, "hello", {
+      layout: "splits",
+      preserveActivePane: false,
+      workdir: "/tmp/my-review"
+    })
+
+    const sentTexts = terminal.calls
+      .filter((c) => c.method === "sendText")
+      .map((c) => c.args[1])
+
+    expect(sentTexts[0]).toBe("cd '/tmp/my-review' && claude 'hello'")
+    expect(sentTexts[1]).toBe("cd '/tmp/my-review' && codex 'hello'")
+  })
+
+  test("escapes workdir paths with spaces", async () => {
+    const terminal = createFakeTerminal()
+
+    await launchAgents(terminal, [TWO_AGENTS[0]], "hello", {
+      layout: "splits",
+      preserveActivePane: false,
+      workdir: "/tmp/my project"
+    })
+
+    const sentText = terminal.calls.find((c) => c.method === "sendText")
+    expect(sentText!.args[1]).toBe("cd '/tmp/my project' && claude 'hello'")
+  })
+
   test("tabs layout with preserveActivePane creates tabs for all agents", async () => {
     const terminal = createFakeTerminal()
 

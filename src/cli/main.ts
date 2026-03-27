@@ -13,8 +13,11 @@ import { createConfig, init, runWizard } from "../commands/config-create.ts"
 import { deleteConfig } from "../commands/config-delete.ts"
 import { editConfig } from "../commands/config-edit.ts"
 import { launchAgents, launchCommand } from "../commands/launch.ts"
-import type { LaunchResult } from "../commands/launch.ts"
+import type { LaunchOptions, LaunchResult } from "../commands/launch.ts"
+import { runPrepare } from "../commands/prepare.ts"
+import type { PrepareResult } from "../commands/prepare.ts"
 import { configExists, loadConfig } from "../config/config.ts"
+import type { CommandConfig } from "../config/config.ts"
 import { detectTerminal } from "../terminal/index.ts"
 import type { CliFlags } from "./options.ts"
 import { launchFlags, mergeOptions } from "./options.ts"
@@ -47,6 +50,27 @@ async function ensureConfig(): Promise<boolean> {
 
   await createConfig(content)
   return true
+}
+
+const NO_OVERRIDES: PrepareResult = { workdir: undefined, arg: undefined }
+
+/**
+ * Runs the prepare script for a command if one is configured.
+ *
+ * @param command - The command config (may be undefined for unknown commands)
+ * @param arg - The command argument
+ * @returns Overrides from the prepare script, or empty defaults
+ */
+async function maybePrepare(
+  command: CommandConfig | undefined,
+  arg: string | undefined
+): Promise<PrepareResult> {
+  if (!command?.prepare) {
+    return NO_OVERRIDES
+  }
+
+  process.stdout.write(`Running prepare: ${command.prepare}\n`)
+  return runPrepare(command.prepare, arg)
 }
 
 export const main = defineCommand({
@@ -104,8 +128,18 @@ export const main = defineCommand({
     const route = resolveRoute(rawArgs, flags, commandNames)
 
     if (route.type === "command") {
-      const options = mergeOptions(config.options, route.flags)
-      const description = route.arg ? `${route.name} ${route.arg}` : route.name
+      const command = config.commands[route.name]
+      const prepared = await maybePrepare(command, route.arg)
+      const arg = prepared.arg ?? route.arg
+      const options: LaunchOptions = {
+        ...mergeOptions(config.options, route.flags),
+        workdir: prepared.workdir
+      }
+
+      const description = arg ? `${route.name} ${arg}` : route.name
+      if (prepared.workdir) {
+        process.stdout.write(`Prepare: workdir -> ${prepared.workdir}\n`)
+      }
       process.stdout.write(
         `Launching ${config.agents.length} agents: ${description}\n`
       )
@@ -114,7 +148,7 @@ export const main = defineCommand({
         detectTerminal().terminal,
         config,
         route.name,
-        route.arg,
+        arg,
         options
       )
       printResults(results)

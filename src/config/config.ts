@@ -35,7 +35,14 @@ const CommandSchema = z
       .string()
       .optional()
       .describe("Fallback prompt when no arg is given"),
-    requiresArg: z.boolean().optional().default(false)
+    requiresArg: z.boolean().optional().default(false),
+    prepare: z
+      .string()
+      .optional()
+      .describe(
+        "Shell command to run before launching agents. Supports {{arg}} substitution. " +
+          "Can print JSON to stdout to override context: { workdir?, arg? }"
+      )
   })
   .refine(
     (cmd) => !cmd.requiresArg || cmd.prompt.includes("{{arg}}"),

@@ -5,6 +5,7 @@
 import type { AgentConfig, Config } from "../config/config.ts"
 import { resolveAgentCommand, resolveCommandPrompt } from "../config/config.ts"
 import type { PaneHandle, Terminal } from "../terminal/terminal.ts"
+import { shellEscape } from "../utils/exec.ts"
 
 /** Result of launching a single agent. */
 export interface LaunchResult {
@@ -34,11 +35,13 @@ async function launchInPane(
 }
 
 /** Options that control launch behavior. */
-interface LaunchOptions {
+export interface LaunchOptions {
   /** How to arrange agent panes: side-by-side splits or tabs. */
   readonly layout: "splits" | "tabs"
   /** If true, all agents get new panes and the current pane is left alone. */
   readonly preserveActivePane: boolean
+  /** Working directory to cd into before running the agent command. */
+  readonly workdir?: string
 }
 
 const DEFAULT_LAUNCH_OPTIONS: LaunchOptions = {
@@ -82,7 +85,10 @@ export async function launchAgents(
 
   for (let i = 0; i < agents.length; i++) {
     const agent = agents[i]!
-    const shellCommand = resolveAgentCommand(agent, prompt)
+    const baseCommand = resolveAgentCommand(agent, prompt)
+    const shellCommand = options.workdir
+      ? `cd ${shellEscape(options.workdir)} && ${baseCommand}`
+      : baseCommand
 
     const useCurrentPane = !options.preserveActivePane && i === 0
 
