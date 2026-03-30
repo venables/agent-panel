@@ -52,7 +52,7 @@ async function ensureConfig(): Promise<boolean> {
 export const main = defineCommand({
   meta: {
     name: "panel",
-    version: "0.2.0",
+    version: __VERSION__,
     description:
       "Launch multiple AI coding agents in parallel terminal splits or tabs."
   },
