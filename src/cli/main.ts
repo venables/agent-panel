@@ -19,6 +19,7 @@ import { detectTerminal } from "../terminal/index.ts"
 import type { CliFlags } from "./options.ts"
 import { launchFlags, mergeOptions } from "./options.ts"
 import { resolveRoute } from "./route.ts"
+import { VERSION } from "./version.ts"
 
 function printResults(results: readonly LaunchResult[]): void {
   for (const result of results) {
@@ -52,7 +53,7 @@ async function ensureConfig(): Promise<boolean> {
 export const main = defineCommand({
   meta: {
     name: "panel",
-    version: __VERSION__,
+    version: VERSION,
     description:
       "Launch multiple AI coding agents in parallel terminal splits or tabs."
   },

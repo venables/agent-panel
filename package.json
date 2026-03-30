@@ -1,6 +1,6 @@
 {
   "name": "agent-panel",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Launch multiple AI coding agents in parallel terminal splits",
   "keywords": [
     "agents",
