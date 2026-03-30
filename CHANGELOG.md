@@ -1,10 +1,12 @@
 # Changelog
 
-## 0.3.1
+## 0.3.2
 
 ### Fixes
 
-- Derive CLI `--version` from package.json at build time instead of hardcoding
+- Derive CLI `--version` from package.json instead of hardcoding
+
+## 0.3.1
 
 ## 0.3.0
 
