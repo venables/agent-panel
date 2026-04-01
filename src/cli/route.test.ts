@@ -3,8 +3,18 @@ import { describe, expect, test } from "bun:test"
 import type { CliFlags } from "./options.ts"
 import { resolveRoute } from "./route.ts"
 
-const NO_FLAGS: CliFlags = { tabs: false, preserve: false, message: undefined }
-const TABS_FLAG: CliFlags = { tabs: true, preserve: false, message: undefined }
+const NO_FLAGS: CliFlags = {
+  tabs: false,
+  preserve: false,
+  message: undefined,
+  file: undefined
+}
+const TABS_FLAG: CliFlags = {
+  tabs: true,
+  preserve: false,
+  message: undefined,
+  file: undefined
+}
 const COMMANDS = ["review", "explain", "fix"]
 
 describe("resolveRoute", () => {

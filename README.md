@@ -48,6 +48,9 @@ panel ask what are some ways to improve the error handling here
 # Use -m for a quick prompt (like git -m)
 panel -m "review this for security issues"
 
+# Read prompt from a file
+panel -f prompt.md
+
 # "--" works as an escape for raw prompts
 panel -- review this for security issues
 ```
@@ -164,6 +167,7 @@ panel <command> [arg]          Run a configured command
 panel raw <prompt...>          Send a raw prompt to all agents
 panel ask <prompt...>          Alias for raw
 panel -m <prompt>              Send a prompt (like git -m)
+panel -f <path>                Read prompt from a file
 panel -- <prompt...>           Send a raw prompt (-- escape)
 panel config create            Create config (interactive)
 panel config edit              Open config in $EDITOR

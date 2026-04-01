@@ -23,6 +23,11 @@ export const launchFlags = {
     type: "string",
     alias: "m",
     description: "Send a prompt to all agents (shorthand for raw)"
+  },
+  file: {
+    type: "string",
+    alias: "f",
+    description: "Read prompt from a file"
   }
 } as const satisfies ArgsDef
 
@@ -31,6 +36,7 @@ export interface CliFlags {
   readonly tabs: boolean
   readonly preserve: boolean
   readonly message: string | undefined
+  readonly file: string | undefined
 }
 
 /** Options that control launch behavior. */

@@ -6,6 +6,9 @@
  * — instead routes manually to support catch-all prompt mode.
  */
 
+import { readFile } from "node:fs/promises"
+import { resolve } from "node:path"
+
 import { defineCommand } from "citty"
 
 import { printUsage } from "../commands/command-list.ts"
@@ -20,6 +23,30 @@ import type { CliFlags } from "./options.ts"
 import { launchFlags, mergeOptions } from "./options.ts"
 import { resolveRoute } from "./route.ts"
 import { VERSION } from "./version.ts"
+
+/**
+ * Reads a prompt from a file path, if provided.
+ *
+ * @param filePath - Path to read, or undefined if not provided
+ * @returns The file contents trimmed, or undefined if no path given
+ */
+async function readPromptFile(
+  filePath: string | undefined
+): Promise<string | undefined> {
+  if (!filePath) {
+    return undefined
+  }
+
+  const resolved = resolve(filePath)
+  const content = await readFile(resolved, "utf-8")
+  const prompt = content.trim()
+
+  if (prompt.length === 0) {
+    throw new Error(`File is empty: ${resolved}`)
+  }
+
+  return prompt
+}
 
 function printResults(results: readonly LaunchResult[]): void {
   for (const result of results) {
@@ -64,7 +91,8 @@ export const main = defineCommand({
     const flags: CliFlags = {
       tabs: Boolean(args.tabs),
       preserve: Boolean(args.preserve),
-      message: typeof args.message === "string" ? args.message : undefined
+      message: typeof args.message === "string" ? args.message : undefined,
+      file: typeof args.file === "string" ? args.file : undefined
     }
 
     // Config commands don't need a loaded config
@@ -92,7 +120,10 @@ export const main = defineCommand({
     }
 
     // -m / --message shortcut: send prompt directly to all agents
-    if (flags.message) {
+    // -f / --file shortcut: read prompt from a file
+    const prompt = flags.message ?? (await readPromptFile(flags.file))
+
+    if (prompt) {
       if (!(await ensureConfig())) {
         process.exit(1)
       }
@@ -100,13 +131,13 @@ export const main = defineCommand({
       const config = await loadConfig()
       const options = mergeOptions(config.options, flags)
       process.stdout.write(
-        `Launching ${config.agents.length} agents: ${flags.message}\n`
+        `Launching ${config.agents.length} agents: ${prompt}\n`
       )
 
       const results = await launchAgents(
         detectTerminal().terminal,
         config.agents,
-        flags.message,
+        prompt,
         options
       )
       printResults(results)
