@@ -63,7 +63,8 @@ export const main = defineCommand({
   async run({ rawArgs, args }) {
     const flags: CliFlags = {
       tabs: Boolean(args.tabs),
-      preserve: Boolean(args.preserve)
+      preserve: Boolean(args.preserve),
+      message: typeof args.message === "string" ? args.message : undefined
     }
 
     // Config commands don't need a loaded config
@@ -88,6 +89,28 @@ export const main = defineCommand({
           await deleteConfig()
           return
       }
+    }
+
+    // -m / --message shortcut: send prompt directly to all agents
+    if (flags.message) {
+      if (!(await ensureConfig())) {
+        process.exit(1)
+      }
+
+      const config = await loadConfig()
+      const options = mergeOptions(config.options, flags)
+      process.stdout.write(
+        `Launching ${config.agents.length} agents: ${flags.message}\n`
+      )
+
+      const results = await launchAgents(
+        detectTerminal().terminal,
+        config.agents,
+        flags.message,
+        options
+      )
+      printResults(results)
+      return
     }
 
     if (words.length === 0) {

@@ -3,8 +3,8 @@ import { describe, expect, test } from "bun:test"
 import type { CliFlags } from "./options.ts"
 import { resolveRoute } from "./route.ts"
 
-const NO_FLAGS: CliFlags = { tabs: false, preserve: false }
-const TABS_FLAG: CliFlags = { tabs: true, preserve: false }
+const NO_FLAGS: CliFlags = { tabs: false, preserve: false, message: undefined }
+const TABS_FLAG: CliFlags = { tabs: true, preserve: false, message: undefined }
 const COMMANDS = ["review", "explain", "fix"]
 
 describe("resolveRoute", () => {
@@ -109,6 +109,52 @@ describe("resolveRoute", () => {
 
     test("raw with no prompt throws", () => {
       expect(() => resolveRoute(["raw"], NO_FLAGS, COMMANDS)).toThrow(
+        "No prompt provided"
+      )
+    })
+  })
+
+  describe("ask routes (alias for raw)", () => {
+    test("ask sends remaining words as prompt", () => {
+      const route = resolveRoute(
+        ["ask", "what", "is", "going", "on"],
+        NO_FLAGS,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "what is going on",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("ask with command name sends it as literal prompt", () => {
+      const route = resolveRoute(["ask", "review", "429"], NO_FLAGS, COMMANDS)
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "review 429",
+        flags: NO_FLAGS
+      })
+    })
+
+    test("ask with --tabs passes flag", () => {
+      const route = resolveRoute(
+        ["ask", "hello", "--tabs"],
+        TABS_FLAG,
+        COMMANDS
+      )
+
+      expect(route).toEqual({
+        type: "prompt",
+        prompt: "hello",
+        flags: TABS_FLAG
+      })
+    })
+
+    test("ask with no prompt throws", () => {
+      expect(() => resolveRoute(["ask"], NO_FLAGS, COMMANDS)).toThrow(
         "No prompt provided"
       )
     })

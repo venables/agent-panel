@@ -18,6 +18,11 @@ export const launchFlags = {
     type: "boolean",
     alias: "p",
     description: "Preserve the active pane (all agents get new panes)"
+  },
+  message: {
+    type: "string",
+    alias: "m",
+    description: "Send a prompt to all agents (shorthand for raw)"
   }
 } as const satisfies ArgsDef
 
@@ -25,6 +30,7 @@ export const launchFlags = {
 export interface CliFlags {
   readonly tabs: boolean
   readonly preserve: boolean
+  readonly message: string | undefined
 }
 
 /** Options that control launch behavior. */

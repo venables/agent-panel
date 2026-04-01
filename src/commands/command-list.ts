@@ -57,8 +57,12 @@ export async function printUsage(): Promise<void> {
   process.stdout.write(
     "  panel raw <prompt...>           Send a raw prompt to all agents\n"
   )
+  process.stdout.write("  panel ask <prompt...>           Alias for raw\n")
   process.stdout.write(
-    "  panel -- <prompt...>            Send a raw prompt (alias for raw)\n"
+    "  panel -m <prompt>              Send a prompt (like git -m)\n"
+  )
+  process.stdout.write(
+    "  panel -- <prompt...>            Send a raw prompt (-- escape)\n"
   )
   process.stdout.write("\n")
 
@@ -73,6 +77,9 @@ export async function printUsage(): Promise<void> {
   process.stdout.write("\n")
 
   process.stdout.write("Options:\n")
+  process.stdout.write(
+    "  -m, --message <prompt>         Send a prompt to all agents\n"
+  )
   process.stdout.write(
     "  -t, --tabs                     Use tabs instead of splits\n"
   )

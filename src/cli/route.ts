@@ -59,6 +59,9 @@ function isConfigAction(value: string): value is ConfigAction {
   return CONFIG_ACTIONS.has(value)
 }
 
+/** Keywords that trigger a raw prompt route. */
+const RAW_ALIASES: ReadonlySet<string> = new Set(["raw", "ask"])
+
 /**
  * Builds a prompt route from an array of words.
  *
@@ -86,7 +89,7 @@ function buildPromptRoute(
  * Routing rules (in priority order):
  * 1. No positional words -> help
  * 2. "--" in rawArgs -> everything after is a raw prompt
- * 3. First word is "raw" -> raw prompt (remaining words)
+ * 3. First word is "raw" or "ask" -> raw prompt (remaining words)
  * 4. First word is "config" -> config subcommand
  * 5. First word is "run" + second word matches config -> command
  * 6. First word matches a configured command -> command (shortcut)
@@ -116,8 +119,8 @@ export function resolveRoute(
     return { type: "help" }
   }
 
-  // "raw" prefix -> raw prompt (bypasses command matching)
-  if (words[0] === "raw") {
+  // "raw" / "ask" prefix -> raw prompt (bypasses command matching)
+  if (words[0] && RAW_ALIASES.has(words[0])) {
     return buildPromptRoute(words.slice(1), flags)
   }
 

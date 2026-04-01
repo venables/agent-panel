@@ -42,10 +42,13 @@ Send a raw prompt to all agents:
 # "raw" sends the literal text to all agents
 panel raw what are some ways to improve the error handling here
 
-# Use "raw" to bypass command matching
-panel raw review this for security issues
+# "ask" is an alias for "raw"
+panel ask what are some ways to improve the error handling here
 
-# "--" works as an alias for "ask"
+# Use -m for a quick prompt (like git -m)
+panel -m "review this for security issues"
+
+# "--" works as an escape for raw prompts
 panel -- review this for security issues
 ```
 
@@ -159,7 +162,9 @@ with `{{prompt}}` as the placeholder:
 ```
 panel <command> [arg]          Run a configured command
 panel raw <prompt...>          Send a raw prompt to all agents
-panel -- <prompt...>           Send a raw prompt (alias for raw)
+panel ask <prompt...>          Alias for raw
+panel -m <prompt>              Send a prompt (like git -m)
+panel -- <prompt...>           Send a raw prompt (-- escape)
 panel config create            Create config (interactive)
 panel config edit              Open config in $EDITOR
 panel config delete            Delete config file
