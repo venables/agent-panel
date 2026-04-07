@@ -60,9 +60,15 @@
       "description": "Behavioral options for panel.",
       "additionalProperties": false,
       "properties": {
+        "layout": {
+          "type": "string",
+          "enum": ["splits", "tabs"],
+          "description": "How to arrange agent panes: side-by-side splits or tabs.",
+          "default": "splits"
+        },
         "preserveActivePane": {
           "type": "boolean",
-          "description": "If true, all agents get new splits and the current pane is left alone.",
+          "description": "If true, all agents get new splits/tabs and the current pane is left alone.",
           "default": false
         }
       }
