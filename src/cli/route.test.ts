@@ -3,8 +3,18 @@ import { describe, expect, test } from "bun:test"
 import type { CliFlags } from "./options.ts"
 import { resolveRoute } from "./route.ts"
 
-const NO_FLAGS: CliFlags = { tabs: false, preserve: false }
-const TABS_FLAG: CliFlags = { tabs: true, preserve: false }
+const NO_FLAGS: CliFlags = {
+  tabs: false,
+  preserve: false,
+
+  file: undefined
+}
+const TABS_FLAG: CliFlags = {
+  tabs: true,
+  preserve: false,
+
+  file: undefined
+}
 const COMMANDS = ["review", "explain", "fix"]
 
 describe("resolveRoute", () => {
@@ -50,108 +60,6 @@ describe("resolveRoute", () => {
     test("config with no action throws", () => {
       expect(() => resolveRoute(["config"], NO_FLAGS, COMMANDS)).toThrow(
         'Unknown config action: ""'
-      )
-    })
-  })
-
-  describe("raw routes (raw prompt)", () => {
-    test("raw sends remaining words as prompt", () => {
-      const route = resolveRoute(
-        ["raw", "what", "is", "going", "on"],
-        NO_FLAGS,
-        COMMANDS
-      )
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "what is going on",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("raw with command name sends it as literal prompt", () => {
-      const route = resolveRoute(["raw", "review", "429"], NO_FLAGS, COMMANDS)
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "review 429",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("raw with 'run' sends it as literal prompt", () => {
-      const route = resolveRoute(
-        ["raw", "run", "me", "a", "test"],
-        NO_FLAGS,
-        COMMANDS
-      )
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "run me a test",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("raw with --tabs passes flag", () => {
-      const route = resolveRoute(
-        ["raw", "hello", "--tabs"],
-        TABS_FLAG,
-        COMMANDS
-      )
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "hello",
-        flags: TABS_FLAG
-      })
-    })
-
-    test("raw with no prompt throws", () => {
-      expect(() => resolveRoute(["raw"], NO_FLAGS, COMMANDS)).toThrow(
-        "No prompt provided"
-      )
-    })
-  })
-
-  describe("-- escape routes (raw prompt)", () => {
-    test("-- sends remaining args as prompt", () => {
-      const route = resolveRoute(["--", "review", "429"], NO_FLAGS, COMMANDS)
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "review 429",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("-- with flags before it passes flags", () => {
-      const route = resolveRoute(
-        ["--tabs", "--", "review", "429"],
-        TABS_FLAG,
-        COMMANDS
-      )
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "review 429",
-        flags: TABS_FLAG
-      })
-    })
-
-    test("-- with flag-like words after includes them in prompt", () => {
-      const route = resolveRoute(["--", "--tabs", "review"], NO_FLAGS, COMMANDS)
-
-      expect(route).toEqual({
-        type: "prompt",
-        prompt: "--tabs review",
-        flags: NO_FLAGS
-      })
-    })
-
-    test("-- with no prompt throws", () => {
-      expect(() => resolveRoute(["--"], NO_FLAGS, COMMANDS)).toThrow(
-        "No prompt provided"
       )
     })
   })

@@ -8,7 +8,12 @@ const DEFAULT_CONFIG: ConfigOptions = {
   preserveActivePane: false
 }
 
-const NO_FLAGS: CliFlags = { tabs: false, preserve: false }
+const NO_FLAGS: CliFlags = {
+  tabs: false,
+  preserve: false,
+
+  file: undefined
+}
 
 describe("mergeOptions", () => {
   test("returns config defaults when no flags are passed", () => {
@@ -21,7 +26,12 @@ describe("mergeOptions", () => {
   })
 
   test("--tabs overrides layout to tabs", () => {
-    const result = mergeOptions(DEFAULT_CONFIG, { tabs: true, preserve: false })
+    const result = mergeOptions(DEFAULT_CONFIG, {
+      tabs: true,
+      preserve: false,
+
+      file: undefined
+    })
 
     expect(result.layout).toBe("tabs")
   })
@@ -29,7 +39,9 @@ describe("mergeOptions", () => {
   test("--preserve overrides preserveActivePane to true", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: false,
-      preserve: true
+      preserve: true,
+
+      file: undefined
     })
 
     expect(result.preserveActivePane).toBe(true)
@@ -38,7 +50,9 @@ describe("mergeOptions", () => {
   test("both flags override both options", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: true,
-      preserve: true
+      preserve: true,
+
+      file: undefined
     })
 
     expect(result).toEqual({
@@ -59,7 +73,12 @@ describe("mergeOptions", () => {
 
   test("--tabs has no effect when config already uses tabs", () => {
     const config: ConfigOptions = { layout: "tabs", preserveActivePane: false }
-    const result = mergeOptions(config, { tabs: true, preserve: false })
+    const result = mergeOptions(config, {
+      tabs: true,
+      preserve: false,
+
+      file: undefined
+    })
 
     expect(result.layout).toBe("tabs")
   })
