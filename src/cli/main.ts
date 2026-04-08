@@ -15,12 +15,13 @@ import { printUsage } from "../commands/command-list.ts"
 import { createConfig, init, runWizard } from "../commands/config-create.ts"
 import { deleteConfig } from "../commands/config-delete.ts"
 import { editConfig } from "../commands/config-edit.ts"
-import { launchAgents, launchCommand } from "../commands/launch.ts"
+import { launchCommand } from "../commands/launch.ts"
 import type { LaunchResult } from "../commands/launch.ts"
 import { configExists, loadConfig } from "../config/config.ts"
 import { detectTerminal } from "../terminal/index.ts"
+import { extractWords } from "./args.ts"
 import type { CliFlags } from "./options.ts"
-import { launchFlags, mergeOptions } from "./options.ts"
+import { launchFlags, mergeOptions, STRING_FLAGS } from "./options.ts"
 import { resolveRoute } from "./route.ts"
 import { VERSION } from "./version.ts"
 
@@ -91,13 +92,12 @@ export const main = defineCommand({
     const flags: CliFlags = {
       tabs: Boolean(args.tabs),
       preserve: Boolean(args.preserve),
-      message: typeof args.message === "string" ? args.message : undefined,
       file: typeof args.file === "string" ? args.file : undefined
     }
 
     // Config commands don't need a loaded config
     // Try to resolve route with empty command names first for config/help
-    const words = rawArgs.filter((arg: string) => !arg.startsWith("-"))
+    const words = extractWords(rawArgs, STRING_FLAGS)
 
     if (words[0] === "config") {
       const route = resolveRoute(rawArgs, flags, [])
@@ -119,31 +119,6 @@ export const main = defineCommand({
       }
     }
 
-    // -m / --message shortcut: send prompt directly to all agents
-    // -f / --file shortcut: read prompt from a file
-    const prompt = flags.message ?? (await readPromptFile(flags.file))
-
-    if (prompt) {
-      if (!(await ensureConfig())) {
-        process.exit(1)
-      }
-
-      const config = await loadConfig()
-      const options = mergeOptions(config.options, flags)
-      process.stdout.write(
-        `Launching ${config.agents.length} agents: ${prompt}\n`
-      )
-
-      const results = await launchAgents(
-        detectTerminal().terminal,
-        config.agents,
-        prompt,
-        options
-      )
-      printResults(results)
-      return
-    }
-
     if (words.length === 0) {
       await printUsage()
       return
@@ -159,8 +134,14 @@ export const main = defineCommand({
     const route = resolveRoute(rawArgs, flags, commandNames)
 
     if (route.type === "command") {
+      const fileArg = await readPromptFile(flags.file)
+      if (fileArg && route.arg) {
+        throw new Error("Cannot use --file with positional arguments")
+      }
+
+      const arg = route.arg ?? fileArg
       const options = mergeOptions(config.options, route.flags)
-      const description = route.arg ? `${route.name} ${route.arg}` : route.name
+      const description = arg ? `${route.name} ${arg}` : route.name
       process.stdout.write(
         `Launching ${config.agents.length} agents: ${description}\n`
       )
@@ -169,23 +150,7 @@ export const main = defineCommand({
         detectTerminal().terminal,
         config,
         route.name,
-        route.arg,
-        options
-      )
-      printResults(results)
-      return
-    }
-
-    if (route.type === "prompt") {
-      const options = mergeOptions(config.options, route.flags)
-      process.stdout.write(
-        `Launching ${config.agents.length} agents: ${route.prompt}\n`
-      )
-
-      const results = await launchAgents(
-        detectTerminal().terminal,
-        config.agents,
-        route.prompt,
+        arg,
         options
       )
       printResults(results)
@@ -197,7 +162,7 @@ export const main = defineCommand({
       process.stderr.write(
         `Unknown command: "${route.word}". Available: ${available}\n`
       )
-      process.stderr.write("Use 'panel raw <prompt>' to send a raw prompt.\n")
+      process.stderr.write("Use 'panel ask <prompt>' to send a raw prompt.\n")
       process.exit(1)
     }
 

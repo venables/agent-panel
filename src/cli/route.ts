@@ -7,6 +7,7 @@
 
 import { extractWords } from "./args.ts"
 import type { CliFlags } from "./options.ts"
+import { STRING_FLAGS } from "./options.ts"
 
 /** Route to a config subcommand. */
 interface ConfigRoute {
@@ -22,13 +23,6 @@ interface CommandRoute {
   readonly flags: CliFlags
 }
 
-/** Route to a raw prompt (e.g. "panel raw build an app"). */
-interface PromptRoute {
-  readonly type: "prompt"
-  readonly prompt: string
-  readonly flags: CliFlags
-}
-
 /** Route to show help (no args provided). */
 interface HelpRoute {
   readonly type: "help"
@@ -40,12 +34,7 @@ interface UnknownRoute {
   readonly word: string
 }
 
-export type Route =
-  | ConfigRoute
-  | CommandRoute
-  | PromptRoute
-  | HelpRoute
-  | UnknownRoute
+export type Route = ConfigRoute | CommandRoute | HelpRoute | UnknownRoute
 
 type ConfigAction = "create" | "edit" | "delete"
 
@@ -59,41 +48,15 @@ function isConfigAction(value: string): value is ConfigAction {
   return CONFIG_ACTIONS.has(value)
 }
 
-/** Keywords that trigger a raw prompt route. */
-const RAW_ALIASES: ReadonlySet<string> = new Set(["raw", "ask"])
-
-/**
- * Builds a prompt route from an array of words.
- *
- * @param promptWords - Words to join into a prompt
- * @param flags - Parsed CLI flags
- * @returns A prompt route
- * @throws When no prompt words are provided
- */
-function buildPromptRoute(
-  promptWords: readonly string[],
-  flags: CliFlags
-): PromptRoute {
-  const prompt = promptWords.join(" ").trim()
-
-  if (prompt.length === 0) {
-    throw new Error("No prompt provided. Usage: panel raw <prompt...>")
-  }
-
-  return { type: "prompt", prompt, flags }
-}
-
 /**
  * Resolves raw CLI arguments into a typed route.
  *
  * Routing rules (in priority order):
  * 1. No positional words -> help
- * 2. "--" in rawArgs -> everything after is a raw prompt
- * 3. First word is "raw" or "ask" -> raw prompt (remaining words)
- * 4. First word is "config" -> config subcommand
- * 5. First word is "run" + second word matches config -> command
- * 6. First word matches a configured command -> command (shortcut)
- * 7. Anything else -> unknown command error
+ * 2. First word is "config" -> config subcommand
+ * 3. First word is "run" + second word matches config -> command
+ * 4. First word matches a configured command -> command (shortcut)
+ * 5. Anything else -> unknown command error
  *
  * @param rawArgs - Raw argument array from citty
  * @param flags - Parsed CLI flags (--tabs, --preserve)
@@ -105,23 +68,10 @@ export function resolveRoute(
   flags: CliFlags,
   configCommandNames: readonly string[]
 ): Route {
-  // Check for -- prompt escape before extracting words
-  const doubleDashIndex = rawArgs.indexOf("--")
-
-  if (doubleDashIndex !== -1) {
-    const afterDash = rawArgs.slice(doubleDashIndex + 1)
-    return buildPromptRoute(afterDash, flags)
-  }
-
-  const words = extractWords(rawArgs)
+  const words = extractWords(rawArgs, STRING_FLAGS)
 
   if (words.length === 0) {
     return { type: "help" }
-  }
-
-  // "raw" / "ask" prefix -> raw prompt (bypasses command matching)
-  if (words[0] && RAW_ALIASES.has(words[0])) {
-    return buildPromptRoute(words.slice(1), flags)
   }
 
   if (words[0] === "config") {

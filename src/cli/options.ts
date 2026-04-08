@@ -19,11 +19,6 @@ export const launchFlags = {
     alias: "p",
     description: "Preserve the active pane (all agents get new panes)"
   },
-  message: {
-    type: "string",
-    alias: "m",
-    description: "Send a prompt to all agents (shorthand for raw)"
-  },
   file: {
     type: "string",
     alias: "f",
@@ -31,11 +26,22 @@ export const launchFlags = {
   }
 } as const satisfies ArgsDef
 
+/**
+ * String-type flags that consume the next token as a value.
+ *
+ * Used by extractWords to skip flag values during positional arg extraction.
+ */
+export const STRING_FLAGS = Object.entries(launchFlags)
+  .filter(([, def]) => def.type === "string")
+  .map(([name, def]) => ({
+    long: name,
+    short: "alias" in def ? def.alias : undefined
+  }))
+
 /** Parsed CLI flags from citty. */
 export interface CliFlags {
   readonly tabs: boolean
   readonly preserve: boolean
-  readonly message: string | undefined
   readonly file: string | undefined
 }
 

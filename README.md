@@ -39,20 +39,12 @@ panel explain "the auth flow"
 Send a raw prompt to all agents:
 
 ```bash
-# "raw" sends the literal text to all agents
-panel raw what are some ways to improve the error handling here
-
-# "ask" is an alias for "raw"
+# "ask" sends the literal text to all agents (configured in your config)
 panel ask what are some ways to improve the error handling here
 
-# Use -m for a quick prompt (like git -m)
-panel -m "review this for security issues"
-
-# Read prompt from a file
-panel -f prompt.md
-
-# "--" works as an escape for raw prompts
-panel -- review this for security issues
+# Read prompt from a file (works with any command)
+panel ask --file prompt.md
+panel review --file ./review-instructions.md
 ```
 
 The `agent-panel` command also works as an alias for `panel`.
@@ -164,11 +156,6 @@ with `{{prompt}}` as the placeholder:
 
 ```
 panel <command> [arg]          Run a configured command
-panel raw <prompt...>          Send a raw prompt to all agents
-panel ask <prompt...>          Alias for raw
-panel -m <prompt>              Send a prompt (like git -m)
-panel -f <path>                Read prompt from a file
-panel -- <prompt...>           Send a raw prompt (-- escape)
 panel config create            Create config (interactive)
 panel config edit              Open config in $EDITOR
 panel config delete            Delete config file

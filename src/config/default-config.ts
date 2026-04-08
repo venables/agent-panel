@@ -11,6 +11,10 @@ export const DEFAULT_CONFIG_CONTENT = `{
 
   // Commands -- use {{arg}} for the optional argument
   "commands": {
+    "ask": {
+      "prompt": "{{arg}}",
+      "requiresArg": true
+    },
     "review": {
       "prompt": "Review PR {{arg}}. Leave comments in this session and not on the PR itself.",
       "promptNoArg": "Review all changes between this branch and origin/main, including any dirty or unstaged files. Leave comments in this session and not on the PR itself."

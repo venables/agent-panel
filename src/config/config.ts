@@ -174,7 +174,20 @@ export async function loadConfig(): Promise<Config> {
   }
 
   const json: unknown = JSON.parse(stripJsonc(raw))
-  return ConfigSchema.parse(json)
+  const config = ConfigSchema.parse(json)
+
+  // Ensure "ask" command exists for configs created before it became config-defined
+  if (!config.commands["ask"]) {
+    return {
+      ...config,
+      commands: {
+        ...config.commands,
+        ask: { prompt: "{{arg}}", requiresArg: true }
+      }
+    }
+  }
+
+  return config
 }
 
 /**

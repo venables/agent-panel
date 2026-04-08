@@ -11,7 +11,7 @@ const DEFAULT_CONFIG: ConfigOptions = {
 const NO_FLAGS: CliFlags = {
   tabs: false,
   preserve: false,
-  message: undefined,
+
   file: undefined
 }
 
@@ -29,7 +29,7 @@ describe("mergeOptions", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: true,
       preserve: false,
-      message: undefined,
+
       file: undefined
     })
 
@@ -40,7 +40,7 @@ describe("mergeOptions", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: false,
       preserve: true,
-      message: undefined,
+
       file: undefined
     })
 
@@ -51,7 +51,7 @@ describe("mergeOptions", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: true,
       preserve: true,
-      message: undefined,
+
       file: undefined
     })
 
@@ -76,7 +76,7 @@ describe("mergeOptions", () => {
     const result = mergeOptions(config, {
       tabs: true,
       preserve: false,
-      message: undefined,
+
       file: undefined
     })
 
