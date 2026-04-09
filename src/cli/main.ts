@@ -20,7 +20,7 @@ import type { LaunchResult } from "../commands/launch.ts"
 import { configExists, loadConfig } from "../config/config.ts"
 import { detectTerminal } from "../terminal/index.ts"
 import { runPromptTui } from "../tui/prompt-tui.ts"
-import { extractWords } from "./args.ts"
+import { assertNoDashDash, extractWords } from "./args.ts"
 import type { CliFlags } from "./options.ts"
 import { launchFlags, mergeOptions, STRING_FLAGS } from "./options.ts"
 import { resolveRoute } from "./route.ts"
@@ -90,6 +90,12 @@ export const main = defineCommand({
     ...launchFlags
   },
   async run({ rawArgs, args }) {
+    // Fail loudly on `--` instead of silently dropping it. Earlier versions
+    // treated it as a raw-prompt escape; that shortcut is gone now and we
+    // don't want `panel -- review 429` to silently run the configured
+    // `review` command with arg `429`.
+    assertNoDashDash(rawArgs)
+
     const flags: CliFlags = {
       tabs: Boolean(args.tabs),
       preserve: Boolean(args.preserve),
