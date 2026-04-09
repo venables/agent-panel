@@ -19,6 +19,7 @@ import { launchCommand } from "../commands/launch.ts"
 import type { LaunchResult } from "../commands/launch.ts"
 import { configExists, loadConfig } from "../config/config.ts"
 import { detectTerminal } from "../terminal/index.ts"
+import { runPromptTui } from "../tui/prompt-tui.ts"
 import { extractWords } from "./args.ts"
 import type { CliFlags } from "./options.ts"
 import { launchFlags, mergeOptions, STRING_FLAGS } from "./options.ts"
@@ -120,7 +121,15 @@ export const main = defineCommand({
     }
 
     if (words.length === 0) {
-      await printUsage()
+      if (!(await ensureConfig())) {
+        process.exit(1)
+      }
+
+      const config = await loadConfig()
+      const launchOptions = mergeOptions(config.options, flags)
+      const terminal = detectTerminal().terminal
+
+      await runPromptTui({ terminal, config, launchOptions })
       return
     }
 
