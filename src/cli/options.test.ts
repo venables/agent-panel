@@ -11,8 +11,8 @@ const DEFAULT_CONFIG: ConfigOptions = {
 const NO_FLAGS: CliFlags = {
   tabs: false,
   preserve: false,
-
-  file: undefined
+  file: undefined,
+  message: undefined
 }
 
 describe("mergeOptions", () => {
@@ -29,8 +29,8 @@ describe("mergeOptions", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: true,
       preserve: false,
-
-      file: undefined
+      file: undefined,
+      message: undefined
     })
 
     expect(result.layout).toBe("tabs")
@@ -40,8 +40,8 @@ describe("mergeOptions", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: false,
       preserve: true,
-
-      file: undefined
+      file: undefined,
+      message: undefined
     })
 
     expect(result.preserveActivePane).toBe(true)
@@ -51,8 +51,8 @@ describe("mergeOptions", () => {
     const result = mergeOptions(DEFAULT_CONFIG, {
       tabs: true,
       preserve: true,
-
-      file: undefined
+      file: undefined,
+      message: undefined
     })
 
     expect(result).toEqual({
@@ -76,8 +76,8 @@ describe("mergeOptions", () => {
     const result = mergeOptions(config, {
       tabs: true,
       preserve: false,
-
-      file: undefined
+      file: undefined,
+      message: undefined
     })
 
     expect(result.layout).toBe("tabs")

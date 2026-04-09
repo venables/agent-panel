@@ -6,14 +6,14 @@ import { resolveRoute } from "./route.ts"
 const NO_FLAGS: CliFlags = {
   tabs: false,
   preserve: false,
-
-  file: undefined
+  file: undefined,
+  message: undefined
 }
 const TABS_FLAG: CliFlags = {
   tabs: true,
   preserve: false,
-
-  file: undefined
+  file: undefined,
+  message: undefined
 }
 const COMMANDS = ["review", "explain", "fix"]
 

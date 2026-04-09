@@ -68,6 +68,9 @@ export async function printUsage(): Promise<void> {
 
   process.stdout.write("Options:\n")
   process.stdout.write(
+    "  -m, --message <prompt>         Send a prompt to all agents (skip TUI)\n"
+  )
+  process.stdout.write(
     "  -f, --file <path>              Read argument from a file\n"
   )
   process.stdout.write(

@@ -93,7 +93,8 @@ export const main = defineCommand({
     const flags: CliFlags = {
       tabs: Boolean(args.tabs),
       preserve: Boolean(args.preserve),
-      file: typeof args.file === "string" ? args.file : undefined
+      file: typeof args.file === "string" ? args.file : undefined,
+      message: typeof args.message === "string" ? args.message : undefined
     }
 
     // Config commands don't need a loaded config
@@ -120,7 +121,44 @@ export const main = defineCommand({
       }
     }
 
+    // -m / --message: non-interactive shortcut that sends a prompt directly
+    // to all agents via the "ask" command. Takes precedence over positional
+    // routing so scripts can use `panel -m "..."` without worrying about
+    // whether the message collides with a configured command name.
+    if (flags.message !== undefined) {
+      if (flags.file !== undefined) {
+        throw new Error("Cannot use --message with --file")
+      }
+
+      if (!(await ensureConfig())) {
+        process.exit(1)
+      }
+
+      const config = await loadConfig()
+      const options = mergeOptions(config.options, flags)
+      process.stdout.write(
+        `Launching ${config.agents.length} agents: ${flags.message}\n`
+      )
+
+      const results = await launchCommand(
+        detectTerminal().terminal,
+        config,
+        "ask",
+        flags.message,
+        options
+      )
+      printResults(results)
+      return
+    }
+
     if (words.length === 0) {
+      // Non-interactive context (piped stdin, CI, etc.): fall back to
+      // printing usage instead of trying to open a TUI that would hang.
+      if (!process.stdin.isTTY) {
+        await printUsage()
+        return
+      }
+
       if (!(await ensureConfig())) {
         process.exit(1)
       }
