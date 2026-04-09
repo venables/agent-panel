@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Running `panel` with no arguments now opens an interactive multi-line prompt
+  and sends the text to every configured agent. **Enter** submits,
+  **Shift+Enter** (or **Alt+Enter** as a fallback) inserts a newline. The target
+  agents are listed above the input.
+- Re-add `-m` / `--message <prompt>` to send a prompt to every agent without
+  opening the TUI (equivalent to `panel ask <prompt>`). Useful in scripts and
+  CI.
+- In non-interactive contexts (piped stdin, no TTY), bare `panel` now prints
+  usage instead of attempting to open a TUI that would hang.
+
+### Breaking changes
+
+- `panel -- <args>` no longer silently falls through to command routing. A bare
+  `--` argument is now rejected with an explicit error pointing at
+  `panel ask <prompt>` and `panel --message <prompt>`. Scripts that relied on
+  `--` as a raw-prompt escape need to be updated.
+
 ## 0.3.2
 
 ### Fixes

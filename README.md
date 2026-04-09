@@ -20,7 +20,18 @@ This installs the `panel` binary (alias for `agent-panel`)
 
 ## Quick start
 
-Run configured commands directly:
+Run `panel` on its own to open an interactive prompt where you can type (or
+paste) any text and send it to every configured agent at once:
+
+```bash
+panel
+```
+
+The prompt is multi-line: **Enter** submits, **Shift+Enter** (or **Alt+Enter**
+as a fallback) inserts a newline. The list of agents the prompt will be sent to
+is shown above the input.
+
+Or run configured commands directly:
 
 ```bash
 # Review a PR (uses the "review" command from your config)
@@ -36,16 +47,22 @@ panel fix ISSUE-456
 panel explain "the auth flow"
 ```
 
-Send a raw prompt to all agents:
+Send a one-off prompt to all agents without opening the TUI:
 
 ```bash
-# "ask" sends the literal text to all agents (configured in your config)
-panel ask what are some ways to improve the error handling here
+# -m / --message sends the text directly to every configured agent
+panel -m "what are some ways to improve the error handling here"
+
+# "ask" works the same way via a positional argument
+panel ask "what are some ways to improve the error handling here"
 
 # Read prompt from a file (works with any command)
 panel ask --file prompt.md
 panel review --file ./review-instructions.md
 ```
+
+In non-interactive contexts (piped stdin, CI, scripts) a bare `panel` prints its
+usage text instead of trying to open the TUI. Use `-m` in scripts.
 
 The `agent-panel` command also works as an alias for `panel`.
 
@@ -155,11 +172,29 @@ with `{{prompt}}` as the placeholder:
 ## CLI reference
 
 ```
+panel                          Open the interactive prompt (or print usage
+                                 in non-interactive contexts)
 panel <command> [arg]          Run a configured command
 panel config create            Create config (interactive)
 panel config edit              Open config in $EDITOR
 panel config delete            Delete config file
 ```
+
+Flags:
+
+```
+-m, --message <prompt>         Send a prompt to every agent and skip the TUI
+-f, --file <path>              Read the command argument from a file
+-t, --tabs                     Use tabs instead of splits for this run
+-p, --preserve                 Keep the current pane; give every agent a new one
+-h, --help                     Show help
+-v, --version                  Show version
+```
+
+`panel` does **not** accept a bare `--` as an argument-forwarding escape.
+Prompts are dispatched through config-defined commands (one shell invocation per
+agent), so there is no single child process to forward to. Use
+`panel ask <prompt>` or `panel --message <prompt>` for raw prompts.
 
 ## Development
 

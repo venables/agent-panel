@@ -1,6 +1,49 @@
 import { describe, expect, test } from "bun:test"
 
-import { extractWords } from "./args.ts"
+import { assertNoDashDash, DASH_DASH_ERROR, extractWords } from "./args.ts"
+
+describe("assertNoDashDash", () => {
+  test("does nothing when -- is absent", () => {
+    expect(() => assertNoDashDash([])).not.toThrow()
+    expect(() => assertNoDashDash(["review", "123"])).not.toThrow()
+    expect(() => assertNoDashDash(["ask", "foo", "--tabs"])).not.toThrow()
+    expect(() => assertNoDashDash(["-m", "hello"])).not.toThrow()
+  })
+
+  test("throws with the documented error on bare --", () => {
+    expect(() => assertNoDashDash(["--"])).toThrow(DASH_DASH_ERROR)
+  })
+
+  test("throws on panel -- <command> <arg> (the old escape hatch)", () => {
+    expect(() => assertNoDashDash(["--", "review", "429"])).toThrow(
+      DASH_DASH_ERROR
+    )
+  })
+
+  test("throws when -- appears after other args", () => {
+    expect(() => assertNoDashDash(["ask", "--", "foo"])).toThrow(
+      DASH_DASH_ERROR
+    )
+  })
+
+  test("throws when -- is mixed with real flags", () => {
+    expect(() => assertNoDashDash(["--tabs", "--", "hello"])).toThrow(
+      DASH_DASH_ERROR
+    )
+  })
+
+  test("does not throw on tokens that only contain --", () => {
+    // "--foo" is a flag, not a bare --
+    expect(() => assertNoDashDash(["--foo", "bar"])).not.toThrow()
+    // "x--y" is a positional with dashes inside
+    expect(() => assertNoDashDash(["x--y"])).not.toThrow()
+  })
+
+  test("error message points users at the real alternatives", () => {
+    expect(DASH_DASH_ERROR).toContain("'panel ask <prompt>'")
+    expect(DASH_DASH_ERROR).toContain("'panel --message <prompt>'")
+  })
+})
 
 describe("extractWords", () => {
   test("returns all words when no flags present", () => {
