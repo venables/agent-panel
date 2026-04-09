@@ -1,6 +1,6 @@
 {
   "name": "agent-panel",
-  "version": "0.3.2",
+  "version": "1.0.0",
   "description": "Launch multiple AI coding agents in parallel terminal splits",
   "keywords": [
     "agents",
@@ -22,8 +22,8 @@
     "url": "git+https://github.com/venables/agent-panel.git"
   },
   "bin": {
-    "agent-panel": "./dist/index.mjs",
-    "panel": "./dist/index.mjs"
+    "agent-panel": "dist/index.mjs",
+    "panel": "dist/index.mjs"
   },
   "files": [
     "dist"
@@ -43,7 +43,7 @@
     "lint:fixall": "bun run lint:fix --fix-dangerously",
     "nuke": "bun run clean && git clean -xdf node_modules",
     "outdated": "bunx npm-check-updates --interactive --format group",
-    "prepublishOnly": "bun run build",
+    "prepublishOnly": "bun run check && bun run build && bunx publint",
     "start": "bun ./dist/index.mjs",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
