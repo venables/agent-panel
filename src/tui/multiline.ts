@@ -66,6 +66,18 @@ const KITTY_KEYBOARD_ENABLE = "\x1b[>1u"
 const KITTY_KEYBOARD_DISABLE = "\x1b[<u"
 /** Raw sequence sent by Ghostty/Kitty for Shift+Enter when CSI u mode is active. */
 const SHIFT_ENTER_SEQUENCE = "\x1b[13;2u"
+/**
+ * Raw sequences that should cancel the prompt.
+ *
+ * The kitty keyboard protocol rewrites Ctrl+C from the raw `\x03` byte to
+ * `\x1b[99;5u` (99 = 'c', 5 = ctrl modifier), which bypasses clack's
+ * default cancel alias check. We intercept both forms in the stdin data
+ * listener as a belt-and-braces fallback in case readline doesn't parse
+ * the CSI u sequence into a recognizable keypress event.
+ */
+const CANCEL_SEQUENCES: ReadonlySet<string> = new Set(["\x03", "\x1b[99;5u"])
+/** Words the user can type alone and submit to cancel the prompt. */
+const EXIT_WORDS: ReadonlySet<string> = new Set(["exit", "quit"])
 
 /**
  * Multi-line text prompt.
@@ -82,6 +94,14 @@ class MultiLinePrompt extends Prompt<string> {
    * emits for the same sequence will see this flag and skip submission.
    */
   private swallowNextReturn = false
+
+  /**
+   * True once the `finalize` event has fired for this prompt instance.
+   * Guards {@link cancel} against re-entrancy so double-firing from the
+   * data listener + key handler paths can't emit `finalize` twice or
+   * write the kitty-keyboard disable sequence twice.
+   */
+  private hasFinalized = false
 
   /** Returns the user input with a visible cursor marker inserted. */
   get userInputWithCursor(): string {
@@ -160,6 +180,30 @@ class MultiLinePrompt extends Prompt<string> {
     })
   }
 
+  /**
+   * Cancels the prompt immediately and runs finalize cleanup.
+   *
+   * Used by the stdin data interceptor in {@link multiline} when a raw
+   * Ctrl+C sequence arrives that readline didn't parse into a keypress
+   * (e.g. the kitty keyboard \x1b[99;5u form), and by the typed
+   * "exit"/"quit" escape hatch in {@link handleReturn}.
+   *
+   * CRITICAL: emits `finalize` BEFORE `close`. In the base class's
+   * normal onKeypress flow, `finalize` is emitted before `close` is
+   * called. Our finalize listener is where we disable the kitty
+   * keyboard protocol; if we call `close()` directly without firing
+   * finalize first, the CSI-u mode leaks into the caller's terminal
+   * and subsequent keystrokes outside this prompt get misparsed.
+   */
+  public cancel(): void {
+    if (this.hasFinalized) {
+      return
+    }
+    this.state = "cancel"
+    this.emit("finalize")
+    this.close()
+  }
+
   private handleReturn(key: Key): void {
     // Shift+Enter was already handled by the stdin data interceptor;
     // swallow the synchronous keypress readline may fire for the same bytes.
@@ -176,6 +220,19 @@ class MultiLinePrompt extends Prompt<string> {
       this.insertAtCursor("\n")
       this._cursor++
       this.state = "error"
+      return
+    }
+
+    // "exit" / "quit" as a typed escape hatch — cancel instead of submitting.
+    // Can't set state = "cancel" here because the base class's subsequent
+    // return-key logic would overwrite it with "submit" (the check is
+    // state !== "error"). So: veto the submit with error state, then do the
+    // actual cancel on the next tick once onKeypress has finished.
+    if (EXIT_WORDS.has(this.userInput.trim().toLowerCase())) {
+      this.state = "error"
+      process.nextTick(() => {
+        this.cancel()
+      })
       return
     }
 
@@ -210,6 +267,16 @@ class MultiLinePrompt extends Prompt<string> {
 
     this.on("key", (_char, key) => {
       if (!key) {
+        return
+      }
+
+      // Handle Ctrl+C explicitly. Clack's base class has a default cancel
+      // alias for the raw \x03 byte, but the kitty keyboard protocol we
+      // enabled above rewrites Ctrl+C to \x1b[99;5u, which bypasses that
+      // check. Catching it here covers any terminal that re-parses the
+      // kitty sequence back into {ctrl, name: 'c'}.
+      if (key.ctrl && key.name === "c") {
+        this.state = "cancel"
         return
       }
 
@@ -253,6 +320,12 @@ class MultiLinePrompt extends Prompt<string> {
     })
 
     this.on("finalize", () => {
+      // Idempotent: this handler may be invoked via either the base
+      // class's normal submit/cancel flow OR our cancel() method.
+      if (this.hasFinalized) {
+        return
+      }
+      this.hasFinalized = true
       if (process.stdout.isTTY) {
         process.stdout.write(KITTY_KEYBOARD_DISABLE)
       }
@@ -325,15 +398,19 @@ export async function multiline(
     }
   })
 
-  // Intercept Shift+Enter at the raw stdin level so we catch it regardless
-  // of whether Node's readline recognizes the kitty keyboard u-suffix.
-  // Prepend so we fire before readline's internal data handler parses
-  // the chunk into a (possibly missing) keypress event.
+  // Intercept Shift+Enter and Ctrl+C at the raw stdin level so we catch
+  // them regardless of whether Node's readline recognizes the kitty
+  // keyboard u-suffix. Prepend so we fire before readline's internal
+  // data handler parses the chunk into a (possibly missing) keypress.
   const decoder = new TextDecoder()
   const dataHandler = (chunk: Uint8Array | string): void => {
     const str = typeof chunk === "string" ? chunk : decoder.decode(chunk)
     if (str === SHIFT_ENTER_SEQUENCE) {
       prompt.insertNewlineAndRender()
+      return
+    }
+    if (CANCEL_SEQUENCES.has(str)) {
+      prompt.cancel()
     }
   }
   process.stdin.prependListener("data", dataHandler)

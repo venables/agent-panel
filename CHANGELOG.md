@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.1 (2026-04-09)
+
+### Fixes
+
+- Handle Ctrl+C correctly in the multi-line TUI prompt when the kitty keyboard
+  protocol is active. Ghostty/Kitty rewrite Ctrl+C from the raw `\x03` byte to
+  `\x1b[99;5u`, which bypassed clack's default cancel alias and left the prompt
+  unresponsive to Ctrl+C. Both forms are now intercepted at the stdin level and
+  in the keypress listener.
+- Add `exit` / `quit` as a typed escape hatch to cancel the prompt, matching
+  common REPL conventions for users who prefer not to reach for Ctrl+C.
+- Update the prompt hint text to advertise the new ways to quit.
+
 ## 1.0.0 (2026-04-09)
 
 ### Features

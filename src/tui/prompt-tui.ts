@@ -47,7 +47,7 @@ export async function runPromptTui(options: PromptTuiOptions): Promise<void> {
 
   const prompt = await multiline({
     message: "Enter your prompt:",
-    hint: "shift+return for newline · return to submit"
+    hint: "shift+return for newline · return to submit · ctrl+c or 'exit' to quit"
   })
 
   if (isCancel(prompt)) {
